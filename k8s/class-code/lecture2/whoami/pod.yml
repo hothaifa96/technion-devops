@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: who-am-i
+  namespace: hothaifa
+  labels:
+    app: whoami
+    tier: frontend
+    scale: '123'
+spec:
+  containers:
+    - name: whoami-container
+      image: traefik/whoami
+      ports:
+        - containerPort: 80
+      

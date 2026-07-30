@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: whoami-rs
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: whoami
+  template:
+    metadata:
+      name: whoami-pod
+      labels:
+        app: whoami
+    spec:
+      containers:
+        - name: whoami-container
+          image: traefik/whoami
+          ports:
+            - containerPort: 80

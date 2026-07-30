@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whoami-deploy
+spec:
+  # strategy:
+  #  type: RollingUpdate
+  #  rollingUpdate:
+  #    maxSurge: 1
+  #    maxUnavailable: 0
+  strategy:
+    type: Recreate
+  replicas: 10
+  selector:
+    matchLabels:
+      app: whoami
+  template:
+    metadata:
+      name: whoami-pod
+      labels:
+        app: whoami
+    spec:
+      containers:
+        - name: whoami-container
+          image: nginx
+          ports:
+            - containerPort: 80
