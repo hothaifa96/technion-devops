@@ -38,15 +38,15 @@ Your final Kubernetes architecture should look like this:
 Create a Kubernetes Deployment for the backend.
 
 Requirements:
-Deployment name:
+- Deployment name:
 backend
-Image:
+- Image:
 hothaifaz11/hack-backend:latest
-Container port:
+- Container port:
 5000
-Create at least:
+- Create at least:
 2 replicas
-
+- 
 backend-deployment
         |
         |
@@ -67,15 +67,15 @@ Expose the backend using a ClusterIP Service.
 
 Requirements:
 
-Service name:
+- Service name:
 
 backend-service
 
-Type:
+- Type:
 
 ClusterIP
 
-Port:
+- Port:
 
 5000
 
@@ -92,13 +92,13 @@ The frontend needs the backend URL from an environment variable.
 
 Create a ConfigMap.
 
-Name:
+- Name:
 
 frontend-config
 
 The ConfigMap must contain:
 
-VITE_API_URL
+- VITE_API_URL
 
 Example value:
 
