@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-db-data
+  namespace: envs
+data:
+  db_username: meni
+  db_host: mongo-svc.envs.svc.cluster.local

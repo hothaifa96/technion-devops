@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: express-mongo
+spec:
+  selector:
+    matchLabels:
+      app: express-mongo
+  template:
+    metadata:
+      labels:
+        app: express-mongo
+    spec:
+      containers:
+      - name: express-mongo
+        image: mongo-express
+        ports:
+        - containerPort: 8081
+        env: 
+        - name: ME_CONFIG_BASICAUTH_USERNAME
+          value: itay
+        - name: ME_CONFIG_BASICAUTH_PASSWORD
+          value: shawarma
+        - name: ME_CONFIG_MONGODB_ADMINUSERNAME
+          valueFrom:
+                configMapKeyRef:
+                  name: my-db-data
+                  key: db_username
+        - name: ME_CONFIG_MONGODB_ADMINPASSWORD
+          valueFrom:
+            secretKeyRef:
+                  name: secret
+                  key: password
+        - name: ME_CONFIG_MONGODB_SERVER
+          valueFrom:
+                configMapKeyRef:
+                  name: my-db-data
+                  key: db_host 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: express-svc
+spec:
+  type: NodePort
+  selector:
+    app: express-mongo
+  ports:
+  - port: 8081
+    targetPort: 8081
+    nodePort: 30081
