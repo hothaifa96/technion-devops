@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-a
+  namespace: jeff
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-a
+  template:
+    metadata:
+      labels:
+        app: api-a
+    spec:
+      containers:
+      - name: api-a
+        image: api-a:v1
+        ports:
+        - containerPort: 4040
+        env:
+         - name: PORT
+           value: '4040'

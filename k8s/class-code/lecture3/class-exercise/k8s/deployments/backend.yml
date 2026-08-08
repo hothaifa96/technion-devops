@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deploy
+  namespace: class-exercise
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      tier: backend
+  
+  template:
+    metadata:
+      name: backend-pod
+      labels:
+        tier: backend
+    spec:
+      containers:
+        - name: backend-container
+          image:  hothaifaz11/hack-backend
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5001

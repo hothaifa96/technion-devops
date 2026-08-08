@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ubuntu-deploy
+  namespace: class-exercise
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      tier: ubuntu
+  
+  template:
+    metadata:
+      name: ubuntu
+      labels:
+        tier: ubuntu
+    spec:
+      containers:
+        - name: ubuntu
+          image:  ubuntu
+          imagePullPolicy: Always
+          command:
+            - sleep
+            - infinity

@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-b
+  labels:
+    app.kubernetes.io/name: api-b
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+  
+spec:
+  rules:
+  - http:
+      paths:
+      - pathType: Prefix
+        path: /api-b(/|$)(.*)
+        backend:
+          service:
+            name: api-b-svc
+            port: 
+              number: 3000

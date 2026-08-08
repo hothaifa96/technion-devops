@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deploy
+  namespace: class-exercise
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      tier: frontend
+  
+  template:
+    metadata:
+      name: frontend-pod
+      labels:
+        tier: frontend
+    spec:
+      containers:
+        - name: frontend-container
+          image:  hothaifaz11/hack-frontend
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5173
+          env:
+            - name: VITE_API_URL
+              value: 'http://backend-svc.class-exercise.svc.cluster.local:5001'

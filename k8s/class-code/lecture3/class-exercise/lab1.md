@@ -124,7 +124,7 @@ hothaifaz11/hack-frontend:latest
 
 Container port:
 
-5173
+
 
 Replicas:
 

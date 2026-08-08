@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: jeff
+spec:
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: frontend:v1
+        ports:
+        - containerPort: 80
+        volumeMounts:
+          - name: frontend-config
+            mountPath: /usr/share/nginx/html/config.json
+            subPath: config.json
+      volumes:
+      - name: frontend-config
+        configMap:
+          name: frontend-config

@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-b
+  namespace: jeff
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-b
+  template:
+    metadata:
+      labels:
+        app: api-b
+    spec:
+      containers:
+      - name: api-b
+        image: api-b:v1
+        ports:
+        - containerPort: 3000
+        env:
+         - name: PORT
+           value: '3000'
