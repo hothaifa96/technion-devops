@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  namespace: game-lab
+data:
+  # config.json: |
+  #   {
+  #     "gameUrl": "http://game.local/api/game",
+  #     "scoreUrl": "http://game.local/api/score"
+  #   }
