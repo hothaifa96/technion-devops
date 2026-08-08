@@ -6,6 +6,6 @@ metadata:
 data:
   config.json: |
     {
-      apiAUrl: "hodi.local/api-a",
-      apiBUrl: "hodi.local/api-b",
+      "apiAUrl": "/api-a",
+      "apiBUrl": "/api-b"
     }
