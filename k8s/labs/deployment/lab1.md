@@ -1,7 +1,5 @@
 # Lab 1: Create, Scale and Inspect a Deployment
 
-## Objective
-
 Create a Deployment with 3 replicas, inspect it with `kubectl`, and practice scaling. All data should be extracted with `kubectl` commands — do not rely on guessing.
 
 ## Prerequisites

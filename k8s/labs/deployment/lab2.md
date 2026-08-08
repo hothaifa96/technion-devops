@@ -1,7 +1,5 @@
 # Lab 2: Rolling Update, Rollback and History
 
-## Objective
-
 Update a Deployment to a new image, observe the rolling update, extract information about old and new ReplicaSets, and roll back to the previous version.
 
 ## Exercise

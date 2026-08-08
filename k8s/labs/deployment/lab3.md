@@ -1,6 +1,5 @@
 # Lab 3: Labels, Selectors and Data Extraction
 
-## Objective
 
 Create two Deployments with different labels, then use `kubectl` label selectors, `jsonpath`, and `custom-columns` to extract specific data. All answers must come from `kubectl` commands, not from the YAML files you wrote.
 
