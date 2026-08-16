@@ -1,0 +1,82 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: html-generator-script
+  namespace: default
+data:
+  generate_html.py: |
+    import os
+    import time
+    from datetime import datetime
+
+    # Read the volume path from an environment variable, default to /mnt/volume
+    VOLUME_PATH = os.getenv("VOLUME_PATH", "/mnt/volume")
+
+    # Ensure the target directory exists
+    os.makedirs(VOLUME_PATH, exist_ok=True)
+    file_path = os.path.join(VOLUME_PATH, "index.html")
+
+    print(f"Starting HTML generator. Writing to: {file_path}")
+
+    while True:
+        try:
+            current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            html_content = f"""<!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta http-equiv="refresh" content="5">
+                <title>Live Volume Update</title>
+                <style>
+                    body {{ font-family: Arial, sans-serif; text-align: center; margin-top: 50px; background-color: #f4f4f9; }}
+                    h1 {{ color: #333; }}
+                    .time {{ font-size: 2rem; color: #0066cc; font-weight: bold; }}
+                </style>
+            </head>
+            <body>
+                <h1>Data Updated on Volume</h1>
+                <p class="time">{current_time}</p>
+                <p>This page refreshes automatically every 5 seconds.</p>
+            </body>
+            </html>
+            """
+
+            # Atomic write to prevent dirty reads by web servers
+            temp_path = file_path + ".tmp"
+            with open(temp_path, "w", encoding="utf-8") as f:
+                f.write(html_content)
+            os.replace(temp_path, file_path)
+
+            print(f"Updated HTML generated at {current_time}")
+            time.sleep(5)
+            
+        except Exception as e:
+            print(f"Error occurred: {e}")
+            time.sleep(5)
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: html-generator-pod
+spec:
+  containers:
+  - name: generator
+    image: python:3.11-slim
+    command: ["python", "/scripts/generate_html.py"]
+    env:
+    - name: VOLUME_PATH
+      value: "/mnt/volume"
+    volumeMounts:
+    - name: script-vol
+      mountPath: /scripts
+    - name: shared-html-data
+      mountPath: /mnt/volume
+  volumes:
+  - name: script-vol
+    configMap:
+      name: html-generator-script
+  - name: shared-html-data
+    persistentVolumeClaim:  # Or emptyDir, hostPath, etc.
+      claimName: demo-pvc

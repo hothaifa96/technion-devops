@@ -1,0 +1,134 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: logs-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: log-writer-script
+data:
+  write_logs.py: |
+    import time, os, datetime
+    os.makedirs('/data/logs', exist_ok=True)
+    while True:
+        with open('/data/logs/app.log', 'a') as f:
+            f.write(f'{datetime.datetime.now().isoformat()} - New log entry\n')
+        print('wrote log')
+        time.sleep(1)
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-writer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: log-writer
+  template:
+    metadata:
+      labels:
+        app: log-writer
+    spec:
+      containers:
+      - name: writer
+        image: python:3.9-alpine
+        command: ["python3", "/scripts/write_logs.py"]
+        volumeMounts:
+        - name: logs
+          mountPath: /data/logs
+        - name: scripts
+          mountPath: /scripts
+      volumes:
+      - name: logs
+        persistentVolumeClaim:
+          claimName: logs-pvc
+      - name: scripts
+        configMap:
+          name: log-writer-script
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: log-reader-script
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <meta http-equiv="refresh" content="1">
+    </head>
+    <body>
+    <h2>Live Logs</h2>
+    <pre>{{LOGS}}</pre>
+    </body>
+    </html>
+  serve.py: |
+    import http.server, socketserver, os
+    LOG = '``/data/logs/app.log``'
+    class Handler(http.server.SimpleHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            logs = open(LOG).read() if os.path.exists(LOG) else 'No logs yet...'
+            with open('/www/index.html') as f:
+                html = f.read().replace('{{LOGS}}', logs)
+            self.wfile.write(html.encode())
+    os.chdir('/www')
+    with socketserver.TCPServer(('', 8080), Handler) as httpd:
+        print('serving on 8080')
+        httpd.serve_forever()
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-reader
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: log-reader
+  template:
+    metadata:
+      labels:
+        app: log-reader
+    spec:
+      containers:
+      - name: reader
+        image: python:3.9-alpine
+        command: ["python3", "/www/serve.py"]
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: logs
+          mountPath: /data/logs
+        - name: www
+          mountPath: /www
+      volumes:
+      - name: logs
+        persistentVolumeClaim:
+          claimName: logs-pvc
+      - name: www
+        configMap:
+          name: log-reader-script
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: log-reader
+spec:
+  selector:
+    app: log-reader
+  ports:
+  - port: 8080
+    targetPort: 8080
+    nodePort: 30080
+  type: NodePort
