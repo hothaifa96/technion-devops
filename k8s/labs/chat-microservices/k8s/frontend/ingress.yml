@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: chat-frontend
+  namespace: chat-lab
+spec:
+  rules:
+  - host: chat.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: chat-frontend-svc
+            port:
+              number: 80

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Random Chat</title>
+<style>
+  body { font-family: sans-serif; max-width: 700px; margin: auto; padding: 1rem; }
+  #chat { border: 1px solid #ccc; height: 400px; overflow-y: auto; padding: 1rem; background: #f9f9f9; }
+  .msg { margin: 0.4rem 0; padding: 0.4rem; border-radius: 4px; }
+  .A { background: #e0f0ff; color: #0044aa; }
+  .B { background: #e0ffe0; color: #006600; }
+  small { color: #666; }
+</style>
+</head>
+<body>
+  <h1>Random Chat between Microservices</h1>
+  <p>The two backend microservices send each other random HTTP messages. This page shows the merged chat.</p>
+  <div id="chat"></div>
+
+<script>
+let cfg = {};
+
+async function loadConfig() {
+  const res = await fetch('/config.json');
+  cfg = await res.json();
+  refresh();
+  setInterval(refresh, 1000);
+}
+
+async function refresh() {
+  try {
+    const [a, b] = await Promise.all([
+      fetch(cfg.chatAUrl + '/messages'),
+      fetch(cfg.chatBUrl + '/messages')
+    ]);
+    const all = [...(await a.json()), ...(await b.json())];
+    all.sort((x, y) => new Date(x.time).getTime() - new Date(y.time).getTime());
+
+    const box = document.getElementById('chat');
+    box.innerHTML = all.map(m =>
+      `<div class="msg ${m.from}"><strong>${m.from}</strong>: ${m.text} <small>${new Date(m.time).toLocaleTimeString()}</small></div>`
+    ).join('');
+    box.scrollTop = box.scrollHeight;
+  } catch (e) {
+    console.error('refresh failed', e);
+  }
+}
+
+loadConfig();
+</script>
+</body>
+</html>

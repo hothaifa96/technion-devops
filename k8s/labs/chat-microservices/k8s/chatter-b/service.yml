@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: chatter-b-svc
+  namespace: chat-lab
+spec:
+  selector:
+    app: chatter-b
+  ports:
+  - port: 3000
+    targetPort: 3000

@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chatter-b
+  namespace: chat-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chatter-b
+  template:
+    metadata:
+      labels:
+        app: chatter-b
+    spec:
+      containers:
+      - name: chatter
+        image: chatter:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 3000
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+        env:
+        - name: SELF
+          value: B
+        - name: ROUTE_PREFIX
+          value: /api/b
+        - name: OTHER_URL
+          valueFrom:
+            configMapKeyRef:
+              name: chat-config
+              key: CHAT_A_URL

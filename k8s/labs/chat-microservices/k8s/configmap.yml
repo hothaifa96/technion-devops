@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: chat-config
+  namespace: chat-lab
+data:
+  CHAT_A_URL: "http://chat.local/api/a"
+  CHAT_B_URL: "http://chat.local/api/b"
+  config.json: |
+    {
+      "chatAUrl": "http://chat.local/api/a",
+      "chatBUrl": "http://chat.local/api/b"
+    }

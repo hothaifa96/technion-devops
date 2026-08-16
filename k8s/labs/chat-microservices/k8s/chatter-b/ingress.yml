@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: chatter-b
+  namespace: chat-lab
+spec:
+  rules:
+  - host: chat.local
+    http:
+      paths:
+      - path: /api/b
+        pathType: Prefix
+        backend:
+          service:
+            name: chatter-b-svc
+            port:
+              number: 3000

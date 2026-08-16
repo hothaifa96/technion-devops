@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hpa-applicaiton
+  namespace: hpa-demo
+spec:
+  selector:
+    matchLabels:
+      app: hpa-application
+  template:
+    metadata:
+      labels:
+        app: hpa-application
+    spec:
+      containers:
+      - name: hpa-application
+        image: app1:v1
+        imagePullPolicy: Never
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+        ports:
+        - containerPort: 5000
