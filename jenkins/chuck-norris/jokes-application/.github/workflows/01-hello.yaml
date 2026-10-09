@@ -1,0 +1,12 @@
+# name: hello demo pipeline
+
+# on: push
+
+# jobs:
+#   hello:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name : greet message
+#         run: echo hello dello kello mello
+#       - name: test
+#         run : uname -a 

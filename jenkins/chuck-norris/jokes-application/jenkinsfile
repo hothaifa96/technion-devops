@@ -1,0 +1,97 @@
+pipeline{
+    agent any
+    environment{
+        DOCKER_REPO="hothaifaz11/jokes-api"
+        DOCKER_IMAGE="hothaifaz11/jokes-api:v$BUILD_NUMBER"
+        CONTAINER_NAME="$JOB_NAME"
+        TEST_REPO="https://github.com/devops-org-hodi/jokes-test"
+        TEST_DIR="jokes-test"
+        DEPLOYMENT_REPO="https://github.com/devops-org-hodi/jokes-deployment"
+        DEPLOYMNET_DIR="jokes-deployment"
+
+    }
+    stages{
+        stage("build"){
+            steps{
+                withCredentials([usernamePassword
+                (credentialsId: 'docker-creds',
+                 passwordVariable: 'PASS',
+                usernameVariable: 'USERNAME')]) {
+                sh "echo $PASS | docker login -u $USERNAME --password-stdin"
+                sh "docker buildx build --platform linux/amd64,linux/arm64 -t $DOCKER_IMAGE --push ."
+                sh "docker pull $DOCKER_IMAGE"
+                sh "docker images | grep -i $DOCKER_REPO"
+                }
+            }
+        }
+        stage("prepare for testing"){
+            steps{
+                sh """docker run -d \
+                      --name $CONTAINER_NAME \
+                      -p 5000:5000 \
+                      $DOCKER_IMAGE
+                      """
+                sh "git clone $TEST_REPO"
+            }
+        }
+        stage("test"){
+            parallel{
+                stage("sanity test"){
+                    steps{
+                        dir("$TEST_DIR/sanity-test") {
+                            sh "chmod 777 test.sh"
+                            retry(3){
+                                sh "./test.sh"
+                            }
+                        }           
+                    }
+                }
+                stage("test2 test"){
+                    steps{
+                        dir("$TEST_DIR/sanity-test") {
+                            sh "chmod 777 test.sh"
+                            timeout(time: 3, unit: 'SECONDS'){
+                                sh "./test.sh"
+                            } 
+                        }           
+                    }
+                }   
+            }
+        }
+        stage("update manifests"){
+            steps{
+                withCredentials([usernamePassword
+                (credentialsId: 'joke-cred',
+                passwordVariable: 'PASS',
+                usernameVariable: 'USER')]) {
+                    sh "git clone https://$USER:$PASS@github.com/devops-org-hodi/jokes-deployment "
+                    dir("$DEPLOYMNET_DIR/kubernetes"){
+                        sh """ 
+                            sed -i 's|image:.*|image: $DOCKER_IMAGE|g' jokes-manifest.yaml
+                            git config user.name jenkins
+                            git config user.email jenkins@jenkins.com  
+                            git add jokes-manifest.yaml
+                            git commit -m "jenkins: build $BUILD_NUMBER of job $JOB_NAME  see $JOB_DISPLAY_URL"
+                            git push
+                        """
+                    }
+                }
+          }
+        }
+    }
+    post{
+        always{
+            sh "docker rm -f $CONTAINER_NAME"
+            cleanWs()
+            sh "docker rmi $DOCKER_IMAGE"
+        }
+        success{
+            echo "========pipeline executed successfully ========"
+        }
+        failure{
+            echo "========pipeline execution failed========"
+        }
+    }
+}
+
+// doc

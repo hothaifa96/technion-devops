@@ -1,0 +1,31 @@
+name: hello demo pipeline
+
+# on: 
+#   push:
+#     branches:
+#       - main
+# on: 
+#   pull_request:
+#     branches:
+#       - main
+# on:
+#   workflow_dispatch:
+# on: [push,pull_request]
+
+on:
+  schedule:
+    - cron: "* * * * *"
+      
+
+jobs:
+  hello:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: hello demo pipeline
+      - name : greet message
+        run: echo hello dello kello mello
+      - name: test
+        run : |
+          uname -a 
+          docker login 
+          docker build -t name 
