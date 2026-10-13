@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>// devops.jeopardy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="crt-overlay"></div>
+<div class="scanline"></div>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-prompt">$</span>
+    <span class="brand-text">devops --jeopardy</span>
+    <span class="cursor-blink">_</span>
+  </div>
+  <div class="topbar-actions">
+    <button id="btnResetBoard" class="btn btn-ghost" title="Clear all used tiles">reset board</button>
+    <button id="btnResetScores" class="btn btn-ghost" title="Zero both scores">reset scores</button>
+    <button id="btnFullscreen" class="btn btn-ghost">fullscreen</button>
+  </div>
+</header>
+
+<section class="scoreboard">
+  <div class="team-panel team-a" id="panelA">
+    <div class="team-head">
+      <input class="team-name" id="nameA" value="TEAM A" maxlength="20" spellcheck="false" />
+      <span class="team-tag">root@teamA</span>
+    </div>
+    <div class="score" id="scoreA">0</div>
+    <div class="score-controls">
+      <button class="score-btn minus" data-team="A" data-amount="-100">−100</button>
+      <input type="number" id="customA" class="score-custom" placeholder="±" />
+      <button class="score-btn apply" data-team="A" data-custom>apply</button>
+      <button class="score-btn plus" data-team="A" data-amount="100">+100</button>
+    </div>
+  </div>
+
+  <div class="vs-divider">
+    <div class="vs-text">VS</div>
+    <div class="vs-sub">status: <span id="activeTeamLabel">standby</span></div>
+  </div>
+
+  <div class="team-panel team-b" id="panelB">
+    <div class="team-head">
+      <input class="team-name" id="nameB" value="TEAM B" maxlength="20" spellcheck="false" />
+      <span class="team-tag">root@teamB</span>
+    </div>
+    <div class="score" id="scoreB">0</div>
+    <div class="score-controls">
+      <button class="score-btn minus" data-team="B" data-amount="-100">−100</button>
+      <input type="number" id="customB" class="score-custom" placeholder="±" />
+      <button class="score-btn apply" data-team="B" data-custom>apply</button>
+      <button class="score-btn plus" data-team="B" data-amount="100">+100</button>
+    </div>
+  </div>
+</section>
+
+<main class="board-wrap">
+  <div id="board" class="board"></div>
+</main>
+
+<footer class="legend">
+  <span class="legend-item"><span class="dot dot-live"></span> open</span>
+  <span class="legend-item"><span class="dot dot-done"></span> consumed</span>
+  <span class="legend-item">host controls: click tile → reveal answer → award points</span>
+</footer>
+
+<div id="modalOverlay" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-topline">
+      <span id="modalCategory" class="modal-category">CATEGORY</span>
+      <span id="modalValue" class="modal-value">$100</span>
+      <button id="btnCloseModal" class="btn-close" title="close (Esc)">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="modalQuestion" class="modal-question"></div>
+      <div id="modalAnswer" class="modal-answer hidden"></div>
+    </div>
+    <div class="modal-actions">
+      <button id="btnReveal" class="btn btn-primary">reveal answer &gt;&gt;</button>
+      <div id="awardRow" class="award-row hidden">
+        <span class="award-label">award to:</span>
+        <button id="btnAwardA" class="btn btn-award team-a-btn">TEAM A</button>
+        <button id="btnAwardB" class="btn btn-award team-b-btn">TEAM B</button>
+        <button id="btnAwardNone" class="btn btn-ghost">no one</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="questions.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
