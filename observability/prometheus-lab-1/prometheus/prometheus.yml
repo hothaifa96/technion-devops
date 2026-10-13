@@ -1,0 +1,28 @@
+# my global config
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+  scrape_timeout: 10s
+  # scrape_timeout is set to the global default (10s).
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+        labels:
+          app: "prometheus"
+    scrape_native_histograms: true
+  - job_name: WORKER-NODE-I
+    scheme: http
+    metrics_path: /metrics
+    static_configs:
+      - targets: [54.234.102.177:9100]
+        labels:
+          app: EC2
+  - job_name: flask-application
+    scheme: http
+    metrics_path: /metrics
+    static_configs:
+      - targets: [python3:5000]
+        labels:
+          app: flask
