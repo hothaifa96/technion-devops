@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>// who wants to be a devops millionaire</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../shared/theme.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="crt-overlay"></div>
+    <div class="scanline"></div>
+
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-prompt">$</span
+        ><span class="brand-text">sudo devops --millionaire</span
+        ><span class="cursor-blink">_</span>
+      </div>
+      <div class="topbar-actions">
+        <a class="home-link" href="../index.html">&lt; games</a>
+        <button id="btnFullscreen" class="btn btn-ghost">fullscreen</button>
+      </div>
+    </header>
+
+    <!-- setup -->
+    <section id="setup" class="panel">
+      <h2>&gt; who wants to be a devops millionaire?</h2>
+      <p class="muted">
+        15 questions that get harder as you go: production scenarios and gotchas
+        from Docker, Kubernetes, Helm, Jenkins and Prometheus/Grafana. Levels 5
+        and 10 are <b>safe havens</b>. A wrong answer drops you back to the last
+        safe haven, or you can walk away with what you have.
+      </p>
+      <div class="setup-grid">
+        <label
+          >contestant / team
+          <input
+            id="playerName"
+            class="text-input"
+            value="TEAM A"
+            maxlength="24"
+        /></label>
+        <label
+          >timer
+          <select id="timerSel" class="topic-select">
+            <option value="0">off (host-led)</option>
+            <option value="45">45s</option>
+            <option value="60" selected>60s</option>
+            <option value="90">90s</option>
+          </select>
+        </label>
+        <label
+          >topics
+          <select id="topicSel" class="topic-select">
+            <option value="all">all topics (mixed)</option>
+            <option value="docker">focus: Docker</option>
+            <option value="kubernetes">focus: Kubernetes</option>
+            <option value="helm">focus: Helm</option>
+            <option value="jenkins">focus: Jenkins</option>
+            <option value="observability">
+              focus: Prometheus &amp; Grafana
+            </option>
+          </select>
+        </label>
+      </div>
+      <p class="muted">
+        Lifelines (one use each): <b>50:50</b> removes two wrong answers ·
+        <b>ask the senior</b> gives a hint · <b>swap</b> replaces the question.
+        Keys: <b>A-D</b> select · <b>Enter</b> final answer / next.
+      </p>
+      <button id="btnStart" class="btn btn-primary">let's play &gt;&gt;</button>
+      <div id="highscores" class="highscores"></div>
+    </section>
+
+    <!-- game -->
+    <main id="game" class="mil-layout hidden">
+      <section class="mil-main">
+        <div class="lifelines">
+          <button id="ll5050" class="lifeline" title="remove two wrong answers">
+            50:50
+          </button>
+          <button id="llHint" class="lifeline" title="ask the senior engineer">
+            ask the senior
+          </button>
+          <button id="llSwap" class="lifeline" title="swap the question">
+            swap
+          </button>
+          <span class="spacer"></span>
+          <button id="btnWalk" class="btn btn-ghost">walk away</button>
+        </div>
+
+        <div class="statusbar">
+          <span class="pill" id="levelPill">level 1 / 15</span>
+          <span class="pill" id="topicPill">topic</span>
+          <span class="pill"
+            >playing for <strong id="forPill">100</strong></span
+          >
+          <span class="pill hidden" id="clockPill"
+            >time: <strong id="clock">60</strong>s</span
+          >
+        </div>
+        <div id="timer" class="timer hidden"><div></div></div>
+
+        <div id="question" class="mil-question"></div>
+        <div id="hintBox" class="explain hidden"></div>
+        <div id="choices" class="mil-choices"></div>
+
+        <div class="mil-actions">
+          <button id="btnFinal" class="btn btn-primary hidden">
+            final answer?
+          </button>
+          <button id="btnNext" class="btn btn-primary hidden">
+            next question &gt;&gt;
+          </button>
+        </div>
+        <div id="explain" class="explain hidden"></div>
+      </section>
+
+      <aside class="ladder" id="ladder"></aside>
+    </main>
+
+    <!-- results -->
+    <section id="results" class="panel hidden">
+      <h2 id="resultTitle">&gt; game over</h2>
+      <div id="resultText" class="mil-question"></div>
+      <div id="review"></div>
+      <button id="btnAgain" class="btn btn-primary">play again</button>
+    </section>
+
+    <script src="questions.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
