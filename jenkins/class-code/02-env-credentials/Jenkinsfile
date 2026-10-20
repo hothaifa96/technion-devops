@@ -1,0 +1,64 @@
+// 02 - Environment variables & credentials
+// Requires credentials: dockerhub-creds (username/password), slack-token (secret text)
+pipeline {
+    agent any
+
+    environment {
+        APP_NAME  = 'jokes'
+        IMAGE     = "myuser/${APP_NAME}"
+        IMAGE_TAG = "v1.${env.BUILD_NUMBER}"
+        DOCKERHUB = credentials('dockerhub-creds')   // -> DOCKERHUB_USR, DOCKERHUB_PSW
+    }
+
+    stages {
+        stage('Built-in variables') {
+            steps {
+                echo "BUILD_NUMBER=${env.BUILD_NUMBER} JOB_NAME=${env.JOB_NAME}"
+                echo "WORKSPACE=${env.WORKSPACE} NODE_NAME=${env.NODE_NAME}"
+                echo "BUILD_URL=${env.BUILD_URL}"
+                sh 'printenv | sort | head -40'
+            }
+        }
+
+        stage('Custom variables') {
+            environment {
+                STAGE_ONLY = 'visible only in this stage'
+            }
+            steps {
+                sh 'echo "$IMAGE:$IMAGE_TAG - $STAGE_ONLY"'
+                withEnv(['BLOCK_VAR=hello']) {
+                    sh 'echo "block: $BLOCK_VAR"'
+                }
+                script {
+                    env.GIT_SHORT = sh(script: 'git rev-parse --short HEAD 2>/dev/null || echo nogit', returnStdout: true).trim()
+                }
+            }
+        }
+
+        stage('Runtime variable in a later stage') {
+            steps {
+                echo "GIT_SHORT=${env.GIT_SHORT}, STAGE_ONLY=${env.STAGE_ONLY}"   // STAGE_ONLY is null here
+            }
+        }
+
+        stage('credentials() in environment') {
+            steps {
+                // single quotes -> the shell expands the secret, Groovy never sees it
+                sh 'echo "user is $DOCKERHUB_USR, password is $DOCKERHUB_PSW"'   // password masked ****
+                sh 'echo $DOCKERHUB_PSW | docker login -u $DOCKERHUB_USR --password-stdin'
+            }
+        }
+
+        stage('withCredentials') {
+            steps {
+                withCredentials([string(credentialsId: 'slack-token', variable: 'SLACK')]) {
+                    sh 'echo "token length: ${#SLACK}"'
+                }
+            }
+        }
+    }
+
+    post {
+        always { sh 'docker logout || true' }
+    }
+}

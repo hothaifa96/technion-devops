@@ -1,0 +1,10 @@
+{{ .Chart.Name }} deployed to "{{ .Release.Namespace }}" as "{{ .Release.Name }}" (env={{ .Values.environment }}).
+{{- if .Values.ingress.enabled }}
+URL(s):
+{{- range .Values.ingress.hosts }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ .host }}
+{{- end }}
+{{- else }}
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "webapp.fullname" . }} 8080:{{ .Values.service.port }}
+  open http://localhost:8080
+{{- end }}

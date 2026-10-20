@@ -1,0 +1,35 @@
+services:
+  jenkins:
+    build: .
+    container_name: jenkins
+    user: root            # simplest way to access docker.sock in class (NOT for production)
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - jenkins-net
+    restart: unless-stopped
+
+  # inbound agent - create node "agent1" (label: linux docker) in the UI and paste its secret into .env
+  agent1:
+    image: jenkins/inbound-agent:latest-jdk17
+    profiles: ["agent"]
+    environment:
+      JENKINS_URL: http://jenkins:8080
+      JENKINS_AGENT_NAME: agent1
+      JENKINS_SECRET: ${AGENT1_SECRET:-changeme}
+      JENKINS_AGENT_WORKDIR: /home/jenkins/agent
+    networks:
+      - jenkins-net
+    depends_on:
+      - jenkins
+
+volumes:
+  jenkins_home:
+
+networks:
+  jenkins-net:
+    name: jenkins-net

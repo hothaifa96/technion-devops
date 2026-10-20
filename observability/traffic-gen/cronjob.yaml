@@ -1,0 +1,78 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: flask-traffic-generator
+  namespace: default
+spec:
+  schedule: "*/1 * * * *"
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 30
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 45
+      template:
+        metadata:
+          labels:
+            app: flask-traffic-generator
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: traffic-generator
+              image: python:3.12-alpine
+              imagePullPolicy: IfNotPresent
+              command:
+                - python
+                - -u
+                - -c
+                - |
+                  import random
+                  import time
+                  import urllib.error
+                  import urllib.request
+
+                  base = "http://flask-prometheus.default.svc.cluster.local:5000"
+
+                  endpoints = [
+                      "/",
+                      "/work",
+                      "/work",
+                      "/process?count=10",
+                      "/process?count=25",
+                      "/cache?hit=true",
+                      "/cache?hit=false",
+                      "/users",
+                      "/healthz",
+                      "/simulate-error",
+                  ]
+
+                  print("Starting random Flask traffic generation")
+
+                  for i in range(30):
+                      path = random.choice(endpoints)
+                      url = base + path
+
+                      try:
+                          req = urllib.request.Request(
+                              url,
+                              headers={"User-Agent": "minikube-traffic-generator"},
+                          )
+                          with urllib.request.urlopen(req, timeout=3) as response:
+                              print(f"{i+1}/20 {path} -> {response.status}")
+                      except urllib.error.HTTPError as exc:
+                          print(f"{i+1}/20 {path} -> HTTP {exc.code}")
+                      except Exception as exc:
+                          print(f"{i+1}/20 {path} -> ERROR: {exc}")
+
+                      time.sleep(random.uniform(0.2, 1.0))
+
+                  print("Traffic generation complete")
+              resources:
+                requests:
+                  cpu: 25m
+                  memory: 32Mi
+                limits:
+                  cpu: 200m
+                  memory: 96Mi

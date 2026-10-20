@@ -1,0 +1,43 @@
+services:
+  app:
+    build: ../02-python-client
+    ports:
+      - "5000:5000"
+
+  loadgen:
+    image: curlimages/curl:8.10.1
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        while true; do
+          curl -s -o /dev/null http://app:5000/
+          curl -s -o /dev/null http://app:5000/products
+          curl -s -o /dev/null http://app:5000/checkout
+          curl -s -o /dev/null -X POST http://app:5000/orders
+          sleep 0.3
+        done
+    depends_on: [app]
+
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:v1.8.2
+    command: ["--path.rootfs=/host"]
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+    ports:
+      - "9100:9100"
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+      - --web.enable-lifecycle          # allows: curl -X POST localhost:9090/-/reload
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prom-data:/prometheus
+    ports:
+      - "9090:9090"
+
+volumes:
+  prom-data:

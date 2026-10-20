@@ -1,0 +1,6 @@
+replicaCount: 2
+image:
+  repository: myuser/jokes
+  tag: ""
+service:
+  port: 80

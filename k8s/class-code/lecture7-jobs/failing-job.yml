@@ -1,0 +1,15 @@
+# Fails randomly - watch retries with exponential backoff and backoffLimit
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: flaky
+spec:
+  backoffLimit: 3
+  activeDeadlineSeconds: 120
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: flaky
+          image: busybox:1.36
+          command: ["sh", "-c", "N=$((RANDOM % 3)); echo roll=$N; [ $N -eq 0 ]"]

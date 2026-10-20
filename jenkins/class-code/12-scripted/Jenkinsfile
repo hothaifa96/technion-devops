@@ -1,0 +1,47 @@
+// 12 - The same ideas in a SCRIPTED pipeline (compare with 01/05/07)
+properties([
+    parameters([choice(name: 'ENV', choices: ['dev', 'prod'])]),
+    buildDiscarder(logRotator(numToKeepStr: '10'))
+])
+
+node {
+    try {
+        stage('Checkout') {
+            checkout scm
+        }
+
+        stage('Build') {
+            timeout(time: 5, unit: 'MINUTES') {
+                sh 'echo building'
+            }
+        }
+
+        stage('Tests') {
+            parallel(
+                unit: { sh 'echo unit tests' },
+                lint: { sh 'echo lint' }
+            )
+        }
+
+        if (params.ENV == 'prod') {             // replaces "when"
+            stage('Approve') {
+                input message: 'Deploy to prod?'
+            }
+        }
+
+        stage('Deploy') {
+            retry(2) {
+                sh "echo deploying to ${params.ENV}"
+            }
+        }
+
+        currentBuild.result = 'SUCCESS'
+    } catch (err) {                              // replaces post { failure }
+        currentBuild.result = 'FAILURE'
+        echo "failed: ${err}"
+        throw err
+    } finally {                                  // replaces post { always }
+        echo "result: ${currentBuild.result}"
+        deleteDir()
+    }
+}

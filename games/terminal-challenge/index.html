@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>// devops.terminal-challenge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/theme.css" />
+</head>
+<body>
+  <div class="crt-overlay"></div>
+
+  <header class="topbar">
+    <div class="brand"><span class="brand-prompt">$</span><span class="brand-text">devops --terminal-challenge</span><span class="cursor-blink">_</span></div>
+    <div class="topbar-actions">
+      <a class="home-link" href="../index.html">&lt; games</a>
+      <select id="topicSelect" class="topic-select">
+        <option value="all">all topics</option>
+        <option value="docker">Docker</option>
+        <option value="kubernetes">kubectl</option>
+        <option value="helm">Helm</option>
+        <option value="jenkins">Jenkinsfile</option>
+        <option value="observability">PromQL &amp; Prometheus</option>
+      </select>
+      <button id="btnFullscreen" class="btn btn-ghost">fullscreen</button>
+    </div>
+  </header>
+
+  <section class="panel">
+    <div class="statusbar">
+      <span class="pill" id="progress">1/10</span>
+      <span class="pill">streak: <strong id="streak">0</strong></span>
+      <span class="pill">score: <strong id="score">0</strong></span>
+      <span class="pill">time: <strong id="clock">0s</strong></span>
+    </div>
+    <div class="terminal" id="terminal">
+      <div id="log"></div>
+      <div class="term-input-row">
+        <span class="term-prompt">student@devops:~$</span>
+        <input id="input" class="term-input" autocomplete="off" spellcheck="false" autofocus />
+      </div>
+    </div>
+    <p class="muted">Enter = submit &nbsp;|&nbsp; <b>hint</b> = show a hint (-25) &nbsp;|&nbsp; <b>skip</b> = show solution &nbsp;|&nbsp; <b>clear</b> = clear screen</p>
+  </section>
+
+  <script src="challenges.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

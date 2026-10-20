@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: heartbeat
+spec:
+  schedule: "*/1 * * * *"
+  timeZone: "Asia/Jerusalem"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  startingDeadlineSeconds: 30
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: heartbeat
+              image: curlimages/curl:8.10.1
+              command: ["sh", "-c", "date; curl -s -o /dev/null -w '%{http_code}\n' https://kubernetes.io"]

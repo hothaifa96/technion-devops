@@ -1,0 +1,60 @@
+// 01 - First declarative pipeline: agent, stages, steps, sh, script, options, post
+pipeline {
+    agent any
+
+    options {
+        timestamps()
+        timeout(time: 10, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+        stage('Hello') {
+            steps {
+                echo "Hello from build #${env.BUILD_NUMBER} of ${env.JOB_NAME}"
+                sh 'whoami && hostname && pwd'
+            }
+        }
+
+        stage('Multi-line shell') {
+            steps {
+                sh '''
+                    echo "workspace: $WORKSPACE"
+                    mkdir -p out
+                    date > out/date.txt
+                    ls -la out
+                '''
+            }
+        }
+
+        stage('Groovy script') {
+            steps {
+                script {
+                    def tools = ['docker', 'git', 'python3']
+                    tools.each { t ->
+                        def rc = sh(script: "command -v ${t}", returnStatus: true)
+                        echo "${t}: ${rc == 0 ? 'installed' : 'missing'}"
+                    }
+                    def today = sh(script: 'date +%A', returnStdout: true).trim()
+                    echo "Today is ${today}"
+                }
+            }
+        }
+
+        stage('Files') {
+            steps {
+                writeFile file: 'out/message.txt', text: "built by jenkins #${env.BUILD_NUMBER}\n"
+                script {
+                    def msg = readFile('out/message.txt')
+                    echo "file content: ${msg}"
+                }
+            }
+        }
+    }
+
+    post {
+        always  { echo "Result: ${currentBuild.currentResult}" }
+        success { archiveArtifacts artifacts: 'out/*.txt' }
+        cleanup { deleteDir() }
+    }
+}

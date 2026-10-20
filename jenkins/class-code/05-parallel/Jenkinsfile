@@ -1,0 +1,53 @@
+// 05 - parallel stages: static, nested sequential, failFast, dynamic (scripted) parallel
+pipeline {
+    agent any
+
+    options { timestamps() }
+
+    stages {
+        stage('Build') {
+            steps { sh 'echo build; sleep 2' }
+        }
+
+        stage('Quality gates') {
+            failFast true
+            parallel {
+                stage('Unit tests') {
+                    steps { sh 'echo unit; sleep 5' }
+                }
+                stage('Lint') {
+                    steps { sh 'echo lint; sleep 3' }
+                }
+                stage('Security scan') {
+                    steps { sh 'echo trivy; sleep 4' }
+                }
+                stage('Integration') {
+                    stages {                                // sequential stages inside a branch
+                        stage('Start deps') { steps { sh 'echo start db; sleep 2' } }
+                        stage('Run tests')  { steps { sh 'echo integration; sleep 3' } }
+                        stage('Stop deps')  { steps { sh 'echo stop db' } }
+                    }
+                }
+            }
+        }
+
+        stage('Build microservices (dynamic)') {
+            steps {
+                script {
+                    def services = ['auth', 'orders', 'payments', 'notifications']
+                    def branches = [:]
+                    services.each { svc ->
+                        branches["build ${svc}"] = {
+                            sh "echo building ${svc}; sleep \$(shuf -i 1-5 -n 1)"
+                        }
+                    }
+                    parallel branches
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps { echo 'deploy after all parallel branches succeeded' }
+        }
+    }
+}

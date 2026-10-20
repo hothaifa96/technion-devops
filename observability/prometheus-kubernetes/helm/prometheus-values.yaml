@@ -1,0 +1,20 @@
+server:
+  podSecurityContext:
+    runAsUser: 65534
+    runAsGroup: 65534
+    fsGroup: 65534
+
+  securityContext:
+    runAsNonRoot: true
+
+  persistentVolume:
+    enabled: false
+
+
+extraScrapeConfigs: |
+  - job_name: "flask-app"
+    metrics_path: "/metrics"
+    scrape_interval: 30s
+    static_configs:
+      - targets: 
+          - "flask-prometheus.default.svc.cluster.local:5000"

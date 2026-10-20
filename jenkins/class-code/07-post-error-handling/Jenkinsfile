@@ -1,0 +1,90 @@
+// 07 - post conditions, retry, timeout, waitUntil, catchError, warnError, unstable, try/catch
+pipeline {
+    agent any
+
+    parameters {
+        choice(name: 'SCENARIO', choices: ['success', 'unstable', 'failure', 'timeout'], description: 'What should happen?')
+    }
+
+    options {
+        timeout(time: 10, unit: 'MINUTES')
+        timestamps()
+    }
+
+    stages {
+        stage('retry a flaky command') {
+            steps {
+                retry(3) {
+                    sh '''#!/bin/bash
+                        [ $((RANDOM % 2)) -eq 0 ] && echo "lucky" || { echo "flaky failure"; exit 1; }
+                    '''
+                }
+            }
+        }
+
+        stage('waitUntil a service is up') {
+            steps {
+                sh 'rm -f /tmp/ready-$BUILD_NUMBER; (sleep 6; touch /tmp/ready-$BUILD_NUMBER) &'
+                timeout(time: 30, unit: 'SECONDS') {
+                    waitUntil(initialRecurrencePeriod: 2000) {
+                        script { fileExists("/tmp/ready-${env.BUILD_NUMBER}") }
+                    }
+                }
+            }
+        }
+
+        stage('catchError - continue after failure') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    sh 'echo "optional check failed"; exit 1'
+                }
+                echo 'pipeline continues'
+            }
+        }
+
+        stage('warnError - mark unstable') {
+            when { expression { params.SCENARIO == 'unstable' } }
+            steps {
+                warnError('lint warnings') {
+                    sh 'exit 1'
+                }
+            }
+        }
+
+        stage('try / catch / finally') {
+            steps {
+                script {
+                    try {
+                        if (params.SCENARIO == 'failure') {
+                            sh 'echo "deploy failed"; exit 2'
+                        }
+                        echo 'deploy ok'
+                    } catch (err) {
+                        echo "caught: ${err}. rolling back..."
+                        throw err
+                    } finally {
+                        echo 'always cleanup temp resources'
+                    }
+                }
+            }
+        }
+
+        stage('timeout') {
+            when { expression { params.SCENARIO == 'timeout' } }
+            options { timeout(time: 5, unit: 'SECONDS') }
+            steps { sh 'sleep 30' }
+        }
+    }
+
+    post {
+        always     { echo "ALWAYS - result: ${currentBuild.currentResult}" }
+        success    { echo 'SUCCESS' }
+        unstable   { echo 'UNSTABLE' }
+        failure    { echo 'FAILURE - send slack/email here' }
+        aborted    { echo 'ABORTED (timeout / manual stop)' }
+        changed    { echo 'CHANGED - status differs from previous build' }
+        fixed      { echo 'FIXED - previous build was broken' }
+        regression { echo 'REGRESSION - previous build was green' }
+        cleanup    { echo 'CLEANUP - runs last'; sh 'rm -f /tmp/ready-$BUILD_NUMBER' }
+    }
+}

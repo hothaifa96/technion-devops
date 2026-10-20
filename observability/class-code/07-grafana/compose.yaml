@@ -1,0 +1,50 @@
+services:
+  app:
+    build: ../02-python-client
+    ports:
+      - "5000:5000"
+
+  loadgen:
+    image: curlimages/curl:8.10.1
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        while true; do
+          curl -s -o /dev/null http://app:5000/
+          curl -s -o /dev/null http://app:5000/products
+          curl -s -o /dev/null http://app:5000/checkout
+          curl -s -o /dev/null -X POST http://app:5000/orders
+          sleep 0.3
+        done
+    depends_on: [app]
+
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:v1.8.2
+    command: ["--path.rootfs=/host"]
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on: [prometheus]
+
+volumes:
+  grafana-data:

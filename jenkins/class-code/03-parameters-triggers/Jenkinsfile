@@ -1,0 +1,44 @@
+// 03 - Parameters & triggers
+// Run once to register the parameters, then use "Build with Parameters".
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Image tag to deploy')
+        choice(name: 'ENV', choices: ['dev', 'staging', 'prod'], description: 'Target environment')
+        booleanParam(name: 'RUN_TESTS', defaultValue: true, description: 'Run the test stage')
+        text(name: 'RELEASE_NOTES', defaultValue: '', description: 'Free text')
+    }
+
+    triggers {
+        cron('H 6 * * 1-5')          // weekdays ~06:xx
+        // pollSCM('H/5 * * * *')    // prefer webhooks
+    }
+
+    stages {
+        stage('Show parameters') {
+            steps {
+                echo "Deploying ${params.IMAGE_TAG} to ${params.ENV}"
+                sh 'echo "shell sees: $IMAGE_TAG / $ENV"'
+                script {
+                    currentBuild.displayName = "#${env.BUILD_NUMBER} ${params.ENV}:${params.IMAGE_TAG}"
+                    def causes = currentBuild.getBuildCauses()*.shortDescription
+                    echo "Triggered by: ${causes}"
+                }
+            }
+        }
+
+        stage('Tests') {
+            when { expression { params.RUN_TESTS } }
+            steps { echo 'running tests...' }
+        }
+
+        stage('Trigger downstream job') {
+            when { expression { params.ENV != 'prod' } }
+            steps {
+                // requires a job named "01-hello" to exist
+                build job: '01-hello', wait: false
+            }
+        }
+    }
+}

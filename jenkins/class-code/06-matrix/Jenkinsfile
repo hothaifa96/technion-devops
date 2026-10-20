@@ -1,0 +1,41 @@
+// 06 - matrix: test against multiple Python versions x test suites (Docker agent per cell)
+pipeline {
+    agent none
+
+    stages {
+        stage('Matrix tests') {
+            matrix {
+                axes {
+                    axis {
+                        name 'PYTHON'
+                        values '3.10', '3.11', '3.12'
+                    }
+                    axis {
+                        name 'SUITE'
+                        values 'unit', 'smoke'
+                    }
+                }
+                excludes {
+                    exclude {
+                        axis { name 'PYTHON'; values '3.10' }
+                        axis { name 'SUITE';  values 'smoke' }
+                    }
+                }
+                agent {
+                    docker { image "python:${PYTHON}-slim" }
+                }
+                stages {
+                    stage('Version') {
+                        steps { sh 'python --version' }
+                    }
+                    stage('Test') {
+                        steps { sh 'echo "running ${SUITE} tests on python ${PYTHON}"' }
+                    }
+                }
+                post {
+                    failure { echo "cell PYTHON=${PYTHON} SUITE=${SUITE} failed" }
+                }
+            }
+        }
+    }
+}

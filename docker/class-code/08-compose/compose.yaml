@@ -1,0 +1,31 @@
+services:
+  web:
+    build: ../01-dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      GREETING: "hello from compose"
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 5
+
+  redis-ui:
+    image: rediscommander/redis-commander:latest
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    ports:
+      - "8081:8081"
+    profiles: ["debug"]
+
+volumes:
+  redis-data:

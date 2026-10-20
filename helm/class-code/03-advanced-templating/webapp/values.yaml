@@ -1,0 +1,47 @@
+# dev | staging | prod
+environment: dev
+
+replicaCount: 1
+
+image:
+  repository: nginx
+  tag: ""
+  pullPolicy: IfNotPresent
+
+# rendered into a ConfigMap and exposed as env vars (range demo)
+env:
+  LOG_LEVEL: debug
+  FEATURE_X: "false"
+
+# rendered into a Secret (b64enc demo) - override at install time, never commit real values
+secrets:
+  API_KEY: change-me
+
+# the page served by nginx - loaded from files/index.html with tpl
+page:
+  title: Hello Helm
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: nginx
+  hosts:
+    - host: webapp.local
+      paths: ["/"]
+  tls: []
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+resources: {}
+
+podAnnotations: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

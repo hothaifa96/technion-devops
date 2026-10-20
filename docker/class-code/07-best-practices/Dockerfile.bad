@@ -1,0 +1,10 @@
+# What is wrong here? (find at least 8 problems)
+FROM node
+ADD . /app
+WORKDIR /app
+RUN npm install
+RUN apt-get update
+RUN apt-get install -y curl vim git
+ENV API_KEY=sk-1234567890
+EXPOSE 3000
+CMD npm start

@@ -1,0 +1,28 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    course: devops-technion
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: shop
+    scrape_interval: 5s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["app:5000"]
+        labels:
+          env: dev
+          team: shop
+
+  - job_name: node
+    static_configs:
+      - targets: ["node-exporter:9100"]
+
+  # intentionally broken target - look at Status -> Targets
+  - job_name: broken
+    static_configs:
+      - targets: ["does-not-exist:1234"]

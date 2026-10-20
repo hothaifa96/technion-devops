@@ -1,0 +1,34 @@
+global:
+  resolve_timeout: 1m
+
+route:
+  receiver: webhook-default
+  group_by: [alertname, job]
+  group_wait: 10s
+  group_interval: 30s
+  repeat_interval: 1h
+  routes:
+    - matchers: ['severity="critical"']
+      receiver: webhook-critical
+
+receivers:
+  - name: webhook-default
+    webhook_configs:
+      - url: http://webhook:8080/default
+        send_resolved: true
+  - name: webhook-critical
+    webhook_configs:
+      - url: http://webhook:8080/critical
+        send_resolved: true
+  # - name: slack
+  #   slack_configs:
+  #     - api_url: https://hooks.slack.com/services/XXX/YYY/ZZZ
+  #       channel: "#alerts"
+  #       send_resolved: true
+  #       title: '[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}'
+  #       text: '{{ range .Alerts }}{{ .Annotations.summary }}{{ "\n" }}{{ end }}'
+
+inhibit_rules:
+  - source_matchers: ['alertname="ShopDown"']
+    target_matchers: ['severity="warning"']
+    equal: [job]

@@ -1,0 +1,15 @@
+# Number of pods
+replicaCount: 2
+
+image:
+  repository: traefik/whoami
+  # defaults to .Chart.AppVersion
+  tag: ""
+  pullPolicy: IfNotPresent
+
+# Text printed by the app (passed as WHOAMI_NAME env var)
+greeting: hello-from-helm
+
+service:
+  type: ClusterIP
+  port: 80

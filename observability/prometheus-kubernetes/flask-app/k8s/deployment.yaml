@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-prometheus
+  namespace: default
+  labels:
+    app: flask-prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flask-prometheus
+  template:
+    metadata:
+      labels:
+        app: flask-prometheus
+    spec:
+      containers:
+        - name: flask
+          image: flasko:v1
+          imagePullPolicy: Never
+          ports:
+            - name: metrics
+              containerPort: 5000
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi

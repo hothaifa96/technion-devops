@@ -1,0 +1,38 @@
+// Application repo Jenkinsfile that uses the shared library.
+// Configure in Manage Jenkins -> System -> Global Pipeline Libraries:
+//   name: devops-lib, default version: main, SCM: the repo that contains vars/, src/, resources/
+@Library('devops-lib@main') _
+import org.devops.Semver
+
+pipeline {
+    agent any
+    stages {
+        stage('Use a class from src/') {
+            steps {
+                echo "next minor of 1.4.2 is ${Semver.bump('1.4.2', 'minor')}"
+            }
+        }
+        stage('Use a step from vars/') {
+            steps {
+                script {
+                    def ref = buildDockerImage(image: 'myuser/flask-demo', context: 'docker/class-code/01-dockerfile')
+                    echo "built ${ref}"
+                }
+            }
+        }
+        stage('Use a file from resources/') {
+            steps {
+                script {
+                    def tpl = libraryResource 'templates/deployment.yaml'
+                    writeFile file: 'deployment.yaml', text: tpl.replace('__APP__', 'flask').replace('__IMAGE__', 'myuser/flask-demo:1')
+                    sh 'cat deployment.yaml'
+                }
+            }
+        }
+    }
+    post { always { notify() } }
+}
+
+// Or the whole pipeline in 2 lines:
+//   @Library('devops-lib') _
+//   pythonPipeline(image: 'myuser/jokes', appDir: 'jenkins/chuck-norris/jokes-application')

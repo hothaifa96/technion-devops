@@ -1,0 +1,2 @@
+Builds (and optionally pushes) a Docker image.
+Parameters: image (required), tag (default BUILD_NUMBER), context (default "."), push (bool), credentialsId (default dockerhub-creds).

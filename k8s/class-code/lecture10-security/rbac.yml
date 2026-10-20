@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: security-demo
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: viewer
+  namespace: security-demo
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-viewer
+  namespace: security-demo
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: viewer-pod-viewer
+  namespace: security-demo
+subjects:
+  - kind: ServiceAccount
+    name: viewer
+    namespace: security-demo
+roleRef:
+  kind: Role
+  name: pod-viewer
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kubectl
+  namespace: security-demo
+spec:
+  serviceAccountName: viewer
+  containers:
+    - name: kubectl
+      image: bitnami/kubectl:latest
+      command: ["sleep", "infinity"]

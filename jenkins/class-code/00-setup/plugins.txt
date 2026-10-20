@@ -1,0 +1,15 @@
+workflow-aggregator
+git
+github-branch-source
+pipeline-stage-view
+pipeline-graph-view
+docker-workflow
+kubernetes
+credentials-binding
+junit
+timestamper
+ansicolor
+ws-cleanup
+pipeline-utility-steps
+configuration-as-code
+blueocean

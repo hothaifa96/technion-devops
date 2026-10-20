@@ -1,0 +1,15 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: __APP__
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: __APP__ }
+  template:
+    metadata:
+      labels: { app: __APP__ }
+    spec:
+      containers:
+        - name: __APP__
+          image: __IMAGE__

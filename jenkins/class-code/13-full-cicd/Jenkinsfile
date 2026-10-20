@@ -1,0 +1,129 @@
+// 13 - Full CI/CD: quality gates in parallel -> build -> scan -> push -> deploy dev -> approve -> deploy prod
+// Credentials: dockerhub-creds (username/password), kubeconfig (secret file)
+// Use as a Multibranch pipeline with script path: jenkins/class-code/13-full-cicd/Jenkinsfile
+pipeline {
+    agent any
+
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+        timestamps()
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+    }
+
+    environment {
+        APP_DIR = 'jenkins/class-code/13-full-cicd/app'
+        CHART   = 'jenkins/class-code/13-full-cicd/chart'
+        IMAGE   = 'myuser/jokes'
+        TAG     = "${env.BUILD_NUMBER}-${env.GIT_COMMIT ? env.GIT_COMMIT.take(7) : 'local'}"
+    }
+
+    stages {
+        stage('Quality gates') {
+            parallel {
+                stage('Lint') {
+                    agent { docker { image 'python:3.12-slim'; reuseNode true } }
+                    steps {
+                        sh 'pip install -q flake8 && flake8 --max-line-length 120 $APP_DIR'
+                    }
+                }
+                stage('Unit tests') {
+                    agent { docker { image 'python:3.12-slim'; reuseNode true } }
+                    steps {
+                        dir(env.APP_DIR) {
+                            sh 'pip install -q -r requirements.txt pytest && pytest --junitxml=reports/unit.xml'
+                        }
+                    }
+                    post { always { junit "${APP_DIR}/reports/unit.xml" } }
+                }
+                stage('Dockerfile lint') {
+                    steps {
+                        sh 'docker run --rm -i hadolint/hadolint hadolint --failure-threshold error - < $APP_DIR/Dockerfile'
+                    }
+                }
+            }
+        }
+
+        stage('Build image') {
+            steps {
+                sh 'docker build --build-arg APP_VERSION=$TAG -t $IMAGE:$TAG $APP_DIR'
+            }
+        }
+
+        stage('Container test') {
+            steps {
+                sh '''
+                    docker rm -f jokes-test-$BUILD_NUMBER 2>/dev/null || true
+                    docker run -d --name jokes-test-$BUILD_NUMBER $IMAGE:$TAG
+                '''
+                retry(5) {
+                    sleep time: 2, unit: 'SECONDS'
+                    sh 'docker exec jokes-test-$BUILD_NUMBER python -c "import urllib.request;urllib.request.urlopen(\'http://localhost:5000/health\')"'
+                }
+            }
+            post { always { sh 'docker rm -f jokes-test-$BUILD_NUMBER || true' } }
+        }
+
+        stage('Security scan') {
+            steps {
+                sh '''
+                    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest \
+                      image --exit-code 0 --severity HIGH,CRITICAL --no-progress $IMAGE:$TAG
+                '''
+            }
+        }
+
+        stage('Push') {
+            when { anyOf { branch 'main'; buildingTag() } }
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'REG_USER', passwordVariable: 'REG_PASS')]) {
+                    sh '''
+                        echo $REG_PASS | docker login -u $REG_USER --password-stdin
+                        docker push $IMAGE:$TAG
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy dev') {
+            when { branch 'main' }
+            steps {
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+                    sh '''
+                        helm upgrade --install jokes $CHART -n dev --create-namespace \
+                          --set image.repository=$IMAGE --set image.tag=$TAG --atomic --wait --timeout 3m
+                        helm test jokes -n dev
+                    '''
+                }
+            }
+        }
+
+        stage('Approve prod') {
+            when { buildingTag() }
+            options { timeout(time: 30, unit: 'MINUTES') }
+            input { message 'Promote to production?'; ok 'Deploy'; submitter 'admin' }
+            steps { echo 'approved' }
+        }
+
+        stage('Deploy prod') {
+            when { buildingTag() }
+            steps {
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+                    sh '''
+                        helm upgrade --install jokes $CHART -n prod --create-namespace \
+                          --set image.repository=$IMAGE --set image.tag=$TAG --set replicaCount=3 --atomic --wait
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        success { echo "Deployed ${IMAGE}:${TAG}" }
+        failure { echo 'Pipeline failed - notify the team' }
+        always  {
+            sh 'docker logout || true'
+            sh 'docker rmi $IMAGE:$TAG || true'
+        }
+    }
+}

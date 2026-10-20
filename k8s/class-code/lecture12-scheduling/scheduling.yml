@@ -1,0 +1,64 @@
+# Prereqs (2-node minikube "sched"):
+#   kubectl label node sched-m02 disktype=ssd
+#   kubectl taint node sched-m02 dedicated=db:NoSchedule
+---
+# 1. nodeSelector - stays Pending until a node has disktype=ssd AND tolerates the taint
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ssd-pod
+spec:
+  nodeSelector:
+    disktype: ssd
+  containers:
+    - name: app
+      image: nginx:1.27-alpine
+---
+# 2. dedicated node = toleration + affinity
+apiVersion: v1
+kind: Pod
+metadata:
+  name: db-pod
+spec:
+  tolerations:
+    - key: dedicated
+      operator: Equal
+      value: db
+      effect: NoSchedule
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: disktype
+                operator: In
+                values: [ssd]
+  containers:
+    - name: db
+      image: redis:7-alpine
+---
+# 3. anti-affinity - one replica per node (3rd replica stays Pending on 2 nodes)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spread
+spec:
+  replicas: 3
+  selector:
+    matchLabels: { app: spread }
+  template:
+    metadata:
+      labels: { app: spread }
+    spec:
+      tolerations:
+        - key: dedicated
+          operator: Exists
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels: { app: spread }
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: app
+          image: nginx:1.27-alpine

@@ -1,0 +1,15 @@
+services:
+  github-exporter:
+    build: .
+    environment:
+      REPOS: "prometheus/prometheus,grafana/grafana,kubernetes/kubernetes,helm/helm"
+      # GITHUB_TOKEN: ${GITHUB_TOKEN}   # optional, raises the API rate limit
+    ports:
+      - "9200:9200"
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"

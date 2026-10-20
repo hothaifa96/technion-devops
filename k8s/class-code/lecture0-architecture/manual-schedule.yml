@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: manual
+spec:
+  nodeName: arch-demo-m02   # skip the scheduler - kubelet on this node runs it directly
+  containers:
+    - name: app
+      image: nginx:1.27-alpine

@@ -1,0 +1,60 @@
+// 10 - stash/unstash between agents, junit reports (UNSTABLE), coverage, archiveArtifacts, cleanWs
+pipeline {
+    agent none
+
+    parameters {
+        booleanParam(name: 'BREAK_TESTS', defaultValue: false, description: 'Make one test fail -> UNSTABLE')
+    }
+
+    environment {
+        APP_DIR = 'jenkins/class-code/10-artifacts-junit/app'
+    }
+
+    stages {
+        stage('Checkout & stash') {
+            agent any
+            steps {
+                stash name: 'source', includes: "${APP_DIR}/**"
+            }
+        }
+
+        stage('Test') {
+            agent { docker { image 'python:3.12-slim' } }
+            options { skipDefaultCheckout() }
+            steps {
+                unstash 'source'
+                dir(env.APP_DIR) {
+                    // "|| true" -> test failures don't fail the step; junit marks the build UNSTABLE instead
+                    sh '''
+                        pip install -q pytest pytest-cov
+                        BREAK_TESTS=$BREAK_TESTS pytest --junitxml=reports/junit.xml \
+                          --cov=. --cov-report=xml:reports/coverage.xml --cov-report=html:reports/htmlcov || true
+                    '''
+                    stash name: 'reports', includes: 'reports/**'
+                }
+            }
+            post {
+                always {
+                    junit testResults: "${APP_DIR}/reports/junit.xml", allowEmptyResults: false
+                }
+            }
+        }
+
+        stage('Package') {
+            agent any
+            steps {
+                unstash 'source'
+                sh '''
+                    mkdir -p dist
+                    tar czf dist/calc-${BUILD_NUMBER}.tar.gz -C $APP_DIR calc.py
+                    sha256sum dist/*.tar.gz > dist/SHA256SUMS
+                '''
+                dir('dist') { unstash 'reports' }
+                archiveArtifacts artifacts: 'dist/**', fingerprint: true
+            }
+            post {
+                cleanup { cleanWs() }
+            }
+        }
+    }
+}

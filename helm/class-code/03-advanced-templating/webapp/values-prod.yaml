@@ -1,0 +1,27 @@
+environment: prod
+env:
+  LOG_LEVEL: warn
+  FEATURE_X: "true"
+page:
+  title: "PRODUCTION"
+ingress:
+  enabled: true
+  hosts:
+    - host: webapp.example.com
+      paths: ["/"]
+  tls:
+    - secretName: webapp-tls
+      hosts: [webapp.example.com]
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+resources:
+  requests:
+    cpu: 100m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 128Mi
+podAnnotations:
+  prometheus.io/scrape: "true"

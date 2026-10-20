@@ -1,0 +1,33 @@
+# Allocates more memory than its limit -> OOMKilled (exit 137) -> CrashLoopBackOff
+apiVersion: v1
+kind: Pod
+metadata:
+  name: oom-demo
+spec:
+  containers:
+    - name: stress
+      image: polinux/stress
+      command: ["stress"]
+      args: ["--vm", "1", "--vm-bytes", "150M", "--vm-hang", "1"]
+      resources:
+        requests:
+          memory: 50Mi
+        limits:
+          memory: 100Mi
+---
+# CPU limit -> throttled, not killed
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cpu-demo
+spec:
+  containers:
+    - name: stress
+      image: polinux/stress
+      command: ["stress"]
+      args: ["--cpu", "2"]
+      resources:
+        requests:
+          cpu: 100m
+        limits:
+          cpu: 200m

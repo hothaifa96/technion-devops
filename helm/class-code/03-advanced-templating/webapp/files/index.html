@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html>
+<head><title>{{ .Values.page.title }}</title></head>
+<body>
+  <h1>{{ .Values.page.title }}</h1>
+  <p>release: {{ .Release.Name }} | revision: {{ .Release.Revision }} | env: {{ .Values.environment }}</p>
+  <p>chart: {{ .Chart.Name }}-{{ .Chart.Version }}</p>
+</body>
+</html>

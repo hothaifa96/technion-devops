@@ -1,0 +1,14 @@
+groups:
+  - name: shop-recording
+    rules:
+      - record: job:shop_http_requests:rate1m
+        expr: sum by (job) (rate(shop_http_requests_total[1m]))
+
+      - record: job:shop_http_errors:ratio1m
+        expr: |
+          sum by (job) (rate(shop_http_requests_total{status=~"5.."}[1m]))
+            /
+          sum by (job) (rate(shop_http_requests_total[1m]))
+
+      - record: endpoint:shop_http_latency_seconds:p95
+        expr: histogram_quantile(0.95, sum by (le, endpoint) (rate(shop_http_request_duration_seconds_bucket[1m])))

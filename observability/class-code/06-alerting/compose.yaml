@@ -1,0 +1,43 @@
+services:
+  app:
+    build: ../02-python-client
+    ports:
+      - "5000:5000"
+
+  loadgen:
+    image: curlimages/curl:8.10.1
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        while true; do
+          curl -s -o /dev/null http://app:5000/checkout
+          curl -s -o /dev/null http://app:5000/products
+          sleep 0.2
+        done
+    depends_on: [app]
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-lifecycle
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./rules:/etc/prometheus/rules:ro
+    ports:
+      - "9090:9090"
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    ports:
+      - "9093:9093"
+
+  # prints every notification it receives - watch with: docker compose logs -f webhook
+  webhook:
+    image: mendhak/http-https-echo:34
+    environment:
+      HTTP_PORT: 8080
+    ports:
+      - "8080:8080"

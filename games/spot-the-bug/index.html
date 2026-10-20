@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>// devops.spot-the-bug</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/theme.css" />
+</head>
+<body>
+  <div class="crt-overlay"></div>
+
+  <header class="topbar">
+    <div class="brand"><span class="brand-prompt">$</span><span class="brand-text">devops --spot-the-bug</span><span class="cursor-blink">_</span></div>
+    <div class="topbar-actions">
+      <a class="home-link" href="../index.html">&lt; games</a>
+      <select id="topicSelect" class="topic-select">
+        <option value="all">all topics</option>
+        <option value="docker">Docker</option>
+        <option value="kubernetes">Kubernetes</option>
+        <option value="helm">Helm</option>
+        <option value="jenkins">Jenkins</option>
+        <option value="observability">Prometheus &amp; Grafana</option>
+      </select>
+      <button id="btnFullscreen" class="btn btn-ghost">fullscreen</button>
+    </div>
+  </header>
+
+  <section class="panel">
+    <div class="statusbar">
+      <span class="pill" id="progress">1/10</span>
+      <span class="pill" id="titlePill"></span>
+      <span class="pill">score: <strong id="score">0</strong></span>
+    </div>
+    <p class="muted">Click the line(s) you think contain the bug, then press <b>check</b>. Hints cost points.</p>
+    <div id="code" class="code"></div>
+    <div style="display:flex;gap:0.6rem;margin-top:1rem;flex-wrap:wrap">
+      <button id="btnCheck" class="btn btn-primary">check</button>
+      <button id="btnHint" class="btn">hint (-50)</button>
+      <button id="btnReveal" class="btn btn-ghost">reveal</button>
+      <button id="btnNext" class="btn btn-primary hidden">next &gt;&gt;</button>
+    </div>
+    <div id="feedback" class="explain hidden"></div>
+  </section>
+
+  <script src="bugs.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

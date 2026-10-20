@@ -1,0 +1,15 @@
+# visible to ALL charts as .Values.global.*
+global:
+  environment: dev
+  shopName: "DevOps Shop"
+
+# values for the "frontend" subchart
+frontend:
+  enabled: true
+  replicaCount: 1
+
+# values for the "api" subchart
+api:
+  enabled: true
+  replicaCount: 2
+  message: "products api v1"

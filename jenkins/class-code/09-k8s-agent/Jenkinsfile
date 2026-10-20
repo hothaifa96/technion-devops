@@ -1,0 +1,54 @@
+// 09 - Kubernetes agent: ephemeral pod with several containers (python, kaniko, helm)
+// Requires: Jenkins Kubernetes plugin + cloud configured, secret "dockerhub-config" (docker config.json) in the agent namespace
+pipeline {
+    agent {
+        kubernetes {
+            yamlFile 'jenkins/class-code/09-k8s-agent/pod.yaml'
+            defaultContainer 'python'
+        }
+    }
+
+    environment {
+        IMAGE = 'myuser/jokes'
+        TAG   = "${env.BUILD_NUMBER}"
+    }
+
+    stages {
+        stage('Where am I?') {
+            steps {
+                sh 'hostname && cat /etc/os-release | head -2'
+                container('helm') { sh 'helm version --short' }
+            }
+        }
+
+        stage('Unit tests') {
+            steps {
+                dir('jenkins/chuck-norris/jokes-application') {
+                    sh 'pip install -q -r requirements.txt && python -c "import main" || true'
+                }
+            }
+        }
+
+        stage('Build & push with Kaniko') {
+            steps {
+                container('kaniko') {
+                    sh '''
+                      /kaniko/executor \
+                        --context=dir://$WORKSPACE/jenkins/chuck-norris/jokes-application \
+                        --destination=$IMAGE:$TAG \
+                        --cache=true
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy with Helm') {
+            when { branch 'main' }
+            steps {
+                container('helm') {
+                    sh 'helm upgrade --install jokes helm/class-code/02-my-first-chart/whoami -n jokes --create-namespace --wait'
+                }
+            }
+        }
+    }
+}

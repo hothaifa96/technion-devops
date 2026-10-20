@@ -1,0 +1,83 @@
+// 04 - when conditions & input approval
+// Works best as a Multibranch pipeline (BRANCH_NAME, TAG_NAME, CHANGE_ID are set).
+pipeline {
+    agent none        // don't hold an executor while waiting for input
+
+    parameters {
+        choice(name: 'ENV', choices: ['dev', 'staging', 'prod'])
+        booleanParam(name: 'FORCE_DEPLOY', defaultValue: false)
+    }
+
+    stages {
+        stage('Build') {
+            agent any
+            steps { echo "building branch ${env.BRANCH_NAME ?: 'n/a'}" }
+        }
+
+        stage('Only on main') {
+            agent any
+            when { branch 'main' }
+            steps { echo 'main branch only' }
+        }
+
+        stage('Only on feature/*') {
+            agent any
+            when { branch pattern: 'feature/.*', comparator: 'REGEXP' }
+            steps { echo 'feature branch' }
+        }
+
+        stage('Only for PRs') {
+            agent any
+            when { changeRequest() }
+            steps { echo "PR #${env.CHANGE_ID} -> ${env.CHANGE_TARGET}" }
+        }
+
+        stage('Only when frontend changed') {
+            agent any
+            when { changeset 'frontend/**' }
+            steps { echo 'frontend files changed' }
+        }
+
+        stage('Deploy dev/staging') {
+            agent any
+            when {
+                anyOf {
+                    environment name: 'ENV', value: 'dev'
+                    environment name: 'ENV', value: 'staging'
+                }
+            }
+            steps { echo "deploying to ${params.ENV}" }
+        }
+
+        stage('Approve prod') {
+            when {
+                beforeInput true
+                anyOf {
+                    equals expected: 'prod', actual: params.ENV
+                    expression { params.FORCE_DEPLOY }
+                }
+            }
+            options { timeout(time: 15, unit: 'MINUTES') }
+            input {
+                message 'Deploy to PRODUCTION?'
+                ok 'Ship it'
+                submitterParameter 'APPROVER'
+                parameters {
+                    choice(name: 'STRATEGY', choices: ['rolling', 'blue-green', 'canary'])
+                }
+            }
+            steps {
+                echo "approved by ${APPROVER} with strategy ${STRATEGY}"
+            }
+        }
+
+        stage('Deploy prod') {
+            agent any
+            when {
+                beforeAgent true
+                equals expected: 'prod', actual: params.ENV
+            }
+            steps { echo 'deploying to prod' }
+        }
+    }
+}

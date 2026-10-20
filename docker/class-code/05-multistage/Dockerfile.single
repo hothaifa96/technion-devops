@@ -1,0 +1,7 @@
+# Single stage - ships the whole Go toolchain (~800MB)
+FROM golang:1.22
+WORKDIR /src
+COPY . .
+RUN go build -o /server .
+EXPOSE 8080
+CMD ["/server"]

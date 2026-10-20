@@ -1,0 +1,21 @@
+# DON'T do this - shows why privileged + hostPath is dangerous
+apiVersion: v1
+kind: Pod
+metadata:
+  name: insecure
+  namespace: security-demo
+spec:
+  hostPID: true
+  containers:
+    - name: root-shell
+      image: busybox:1.36
+      command: ["sleep", "infinity"]
+      securityContext:
+        privileged: true
+      volumeMounts:
+        - name: host
+          mountPath: /host
+  volumes:
+    - name: host
+      hostPath:
+        path: /

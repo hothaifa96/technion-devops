@@ -1,0 +1,8 @@
+# Demo: ENTRYPOINT vs CMD
+#   docker build -f Dockerfile.entrypoint -t pinger .
+#   docker run --rm pinger                -> ping -c 3 localhost
+#   docker run --rm pinger google.com     -> ping -c 3 google.com
+#   docker run --rm --entrypoint sh -it pinger
+FROM alpine:3.20
+ENTRYPOINT ["ping", "-c", "3"]
+CMD ["localhost"]

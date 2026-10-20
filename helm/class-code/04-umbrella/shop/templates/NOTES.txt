@@ -1,0 +1,2 @@
+{{ .Values.global.shopName }} ({{ .Values.global.environment }}) installed.
+frontend enabled: {{ .Values.frontend.enabled }}  | api enabled: {{ .Values.api.enabled }} (replicas {{ .Values.api.replicaCount }})

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>// devops.games</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared/theme.css" />
+</head>
+<body>
+  <div class="crt-overlay"></div>
+  <div class="scanline"></div>
+
+  <header class="topbar">
+    <div class="brand"><span class="brand-prompt">$</span><span class="brand-text">ls ~/devops-games</span><span class="cursor-blink">_</span></div>
+    <div class="topbar-actions"><span class="muted">Docker · Kubernetes · Helm · Jenkins · Prometheus · Grafana</span></div>
+  </header>
+
+  <div class="cards">
+    <a class="card" href="jeopardy/index.html?board=docker">
+      <h3>jeopardy --board docker</h3>
+      <p>Classic 2-team Jeopardy: Dockerfile, docker run, volumes &amp; networks, multi-stage &amp; buildx, best practices.</p>
+      <span class="tag">teams · host-led · projector</span>
+    </a>
+    <a class="card" href="jeopardy/index.html?board=kubernetes">
+      <h3>jeopardy --board kubernetes</h3>
+      <p>Control plane, worker node, workloads, networking, config &amp; security.</p>
+      <span class="tag">teams · host-led · projector</span>
+    </a>
+    <a class="card" href="jeopardy/index.html?board=helm">
+      <h3>jeopardy --board helm</h3>
+      <p>Charts, structure, templating, release lifecycle, hooks, dependencies, OCI.</p>
+      <span class="tag">teams · host-led · projector</span>
+    </a>
+    <a class="card" href="jeopardy/index.html?board=jenkins">
+      <h3>jeopardy --board jenkins</h3>
+      <p>Architecture, syntax, credentials, when/input/parallel/matrix, post &amp; reliability.</p>
+      <span class="tag">teams · host-led · projector</span>
+    </a>
+    <a class="card" href="jeopardy/index.html?board=observability">
+      <h3>jeopardy --board observability</h3>
+      <p>Prometheus architecture, metric types, PromQL, exporters &amp; Python client, Grafana.</p>
+      <span class="tag">teams · host-led · projector</span>
+    </a>
+    <a class="card" href="quiz-show/index.html">
+      <h3>quiz-show</h3>
+      <p>Timed multiple-choice rounds with speed bonus. Pick topics, solo or 2 alternating teams, review missed questions.</p>
+      <span class="tag">solo / teams · keyboard 1-4</span>
+    </a>
+    <a class="card" href="spot-the-bug/index.html">
+      <h3>spot-the-bug</h3>
+      <p>Broken Dockerfiles, manifests, Helm templates, Jenkinsfiles and PromQL. Click the guilty line, learn why.</p>
+      <span class="tag">solo / class discussion</span>
+    </a>
+    <a class="card" href="terminal-challenge/index.html">
+      <h3>terminal-challenge</h3>
+      <p>Type the docker / kubectl / helm command, Jenkinsfile step or PromQL query that solves the task. Streak bonus!</p>
+      <span class="tag">solo · speed run</span>
+    </a>
+    <a class="card" href="../devops-jeopardy/index.html">
+      <h3>devops-jeopardy (original)</h3>
+      <p>The original mixed board: Git, Docker, Kubernetes, CI/CD, Linux &amp; networking, Cloud &amp; IaC.</p>
+      <span class="tag">teams · host-led</span>
+    </a>
+  </div>
+</body>
+</html>

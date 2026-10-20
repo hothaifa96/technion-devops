@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-prometheus
+  namespace: default
+  labels:
+    app: flask-prometheus
+spec:
+  selector:
+    app: flask-prometheus
+  ports:
+    - name: metrics
+      port: 5000
+      targetPort: metrics

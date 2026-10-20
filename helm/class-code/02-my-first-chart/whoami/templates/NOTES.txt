@@ -1,0 +1,5 @@
+Release "{{ .Release.Name }}" (revision {{ .Release.Revision }}) deployed {{ .Values.replicaCount }} whoami pods.
+
+Try it:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "whoami.fullname" . }} 8080:{{ .Values.service.port }}
+  curl localhost:8080

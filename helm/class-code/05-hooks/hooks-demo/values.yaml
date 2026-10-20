@@ -1,0 +1,4 @@
+replicaCount: 1
+
+# set to true to make the migration hook fail -> install/upgrade fails
+failMigration: false

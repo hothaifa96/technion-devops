@@ -1,0 +1,6 @@
+apiVersion: v2
+name: hooks-demo
+description: Demo of Helm hooks (pre-install, pre-upgrade, post-install) and helm test
+type: application
+version: 0.1.0
+appVersion: "v1.10"

@@ -1,0 +1,12 @@
+services:
+  pushgateway:
+    image: prom/pushgateway:v1.9.0
+    ports:
+      - "9091:9091"
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"

@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: quotes-config
+data:
+  APP_VERSION: "1.0"
+  GREETING: "hello"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quotes
+  labels:
+    app: quotes
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: quotes
+  template:
+    metadata:
+      labels:
+        app: quotes
+    spec:
+      containers:
+        - name: quotes
+          image: myuser/quotes:1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: quotes-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: quotes
+spec:
+  type: ClusterIP
+  selector:
+    app: quotes
+  ports:
+    - port: 80
+      targetPort: 8000

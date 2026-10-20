@@ -1,0 +1,45 @@
+# The app becomes "sick" after 30s (removes /tmp/healthy) -> liveness restarts it.
+# Readiness depends on /tmp/ready which you can toggle with kubectl exec.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: probes-demo
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: probes-demo }
+  template:
+    metadata:
+      labels: { app: probes-demo }
+    spec:
+      containers:
+        - name: app
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              touch /tmp/healthy /tmp/ready
+              sleep 30
+              rm /tmp/healthy
+              sleep 600
+          startupProbe:
+            exec: { command: ["cat", "/tmp/healthy"] }
+            failureThreshold: 10
+            periodSeconds: 1
+          livenessProbe:
+            exec: { command: ["cat", "/tmp/healthy"] }
+            periodSeconds: 5
+            failureThreshold: 2
+          readinessProbe:
+            exec: { command: ["cat", "/tmp/ready"] }
+            periodSeconds: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: probes-demo
+spec:
+  selector: { app: probes-demo }
+  ports:
+    - port: 80
