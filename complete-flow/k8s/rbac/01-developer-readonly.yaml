@@ -1,0 +1,40 @@
+# "alice" is a developer: she may LOOK at everything in the shop namespace,
+# read logs, but never change anything and never read Secrets.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dev-alice
+  namespace: shop
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: shop-reader
+  namespace: shop
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "services", "endpoints", "configmaps", "persistentvolumeclaims", "events"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets", "statefulsets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs", "cronjobs"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["networkpolicies"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: dev-alice-shop-reader
+  namespace: shop
+subjects:
+  - kind: ServiceAccount
+    name: dev-alice
+    namespace: shop
+roleRef:
+  kind: Role
+  name: shop-reader
+  apiGroup: rbac.authorization.k8s.io

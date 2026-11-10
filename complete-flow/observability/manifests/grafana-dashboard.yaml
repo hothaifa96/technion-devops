@@ -1,0 +1,89 @@
+# The Grafana sidecar watches ConfigMaps labelled grafana_dashboard=1 in all
+# namespaces and loads them as dashboards - "dashboards as code".
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shop-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  shop.json: |
+    {
+      "uid": "complete-flow-shop",
+      "title": "Complete Flow - Shop",
+      "timezone": "browser",
+      "refresh": "10s",
+      "time": { "from": "now-1h", "to": "now" },
+      "schemaVersion": 39,
+      "panels": [
+        {
+          "type": "stat", "title": "Orders in DB",
+          "gridPos": { "x": 0, "y": 0, "w": 6, "h": 5 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [{ "expr": "max(shop_orders_total{namespace=\"shop\"})", "refId": "A" }]
+        },
+        {
+          "type": "stat", "title": "Database reachable",
+          "gridPos": { "x": 6, "y": 0, "w": 6, "h": 5 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [{ "expr": "min(shop_db_up{namespace=\"shop\"})", "refId": "A" }],
+          "fieldConfig": { "defaults": {
+            "mappings": [{ "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }],
+            "color": { "mode": "thresholds" },
+            "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] } } }
+        },
+        {
+          "type": "stat", "title": "Backend pods up",
+          "gridPos": { "x": 12, "y": 0, "w": 6, "h": 5 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [{ "expr": "sum(up{namespace=\"shop\", job=\"backend\"})", "refId": "A" }]
+        },
+        {
+          "type": "stat", "title": "Last generator success",
+          "gridPos": { "x": 18, "y": 0, "w": 6, "h": 5 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [{ "expr": "kube_cronjob_status_last_successful_time{namespace=\"shop\", cronjob=\"data-generator\"} * 1000", "refId": "A" }],
+          "fieldConfig": { "defaults": { "unit": "dateTimeFromNow" } }
+        },
+        {
+          "type": "timeseries", "title": "Orders over time (steps = CronJob runs)",
+          "gridPos": { "x": 0, "y": 5, "w": 12, "h": 8 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [{ "expr": "max(shop_orders_total{namespace=\"shop\"})", "legendFormat": "orders", "refId": "A" }]
+        },
+        {
+          "type": "timeseries", "title": "Backend request rate by route",
+          "gridPos": { "x": 12, "y": 5, "w": 12, "h": 8 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [{ "expr": "sum by (route, status) (rate(http_requests_total{namespace=\"shop\", route=~\"/api.*\"}[1m]))", "legendFormat": "{{route}} {{status}}", "refId": "A" }],
+          "fieldConfig": { "defaults": { "unit": "reqps" } }
+        },
+        {
+          "type": "timeseries", "title": "Backend p95 latency",
+          "gridPos": { "x": 0, "y": 13, "w": 12, "h": 8 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [{ "expr": "histogram_quantile(0.95, sum by (le, route) (rate(http_request_duration_seconds_bucket{namespace=\"shop\", route=~\"/api.*\"}[5m])))", "legendFormat": "{{route}}", "refId": "A" }],
+          "fieldConfig": { "defaults": { "unit": "s" } }
+        },
+        {
+          "type": "timeseries", "title": "nginx requests/s (exporter sidecar)",
+          "gridPos": { "x": 12, "y": 13, "w": 12, "h": 8 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [{ "expr": "sum by (pod) (rate(nginx_http_requests_total{namespace=\"shop\"}[1m]))", "legendFormat": "{{pod}}", "refId": "A" }],
+          "fieldConfig": { "defaults": { "unit": "reqps" } }
+        },
+        {
+          "type": "logs", "title": "Backend logs (Loki)",
+          "gridPos": { "x": 0, "y": 21, "w": 12, "h": 10 },
+          "datasource": { "type": "loki", "uid": "loki" },
+          "targets": [{ "expr": "{namespace=\"shop\", app=\"backend\"}", "refId": "A" }]
+        },
+        {
+          "type": "logs", "title": "Data generator runs (Loki)",
+          "gridPos": { "x": 12, "y": 21, "w": 12, "h": 10 },
+          "datasource": { "type": "loki", "uid": "loki" },
+          "targets": [{ "expr": "{namespace=\"shop\", app=\"data-generator\"} | json | msg=\"generated orders\"", "refId": "A" }]
+        }
+      ]
+    }

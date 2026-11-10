@@ -1,0 +1,16 @@
+# "web" accepts traffic on 8080 only from pods labelled app=client (same namespace)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: web-allow-client
+  namespace: np-lab
+spec:
+  podSelector:
+    matchLabels: { app: web }        # WHO is protected
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: { app: client }   # WHO may connect
+      ports:
+        - { protocol: TCP, port: 8080 }    # on WHICH port

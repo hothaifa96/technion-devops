@@ -1,0 +1,21 @@
+- name: Install the classroom toolbox
+  hosts: mygroup
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Ensure Git and curl are installed
+      ansible.builtin.apt:
+        name:
+          - git
+          - curl
+          - ca-certificates
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+    - name: Read the Git version
+      ansible.builtin.command: git --version
+      register: git_version
+      changed_when: false
+    - name: Show the Git version
+      ansible.builtin.debug:
+        var: git_version.stdout

@@ -1,0 +1,79 @@
+# helm upgrade --install alloy grafana/alloy --version 1.15.0 -n monitoring -f values/alloy.yaml
+# Alloy runs as a DaemonSet: one collector per node. Each collector only tails
+# the logs of pods running on ITS node and ships them to Loki.
+controller:
+  type: daemonset
+  # the control-plane is tainted - a log collector must run there too
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+
+alloy:
+  resources:
+    requests: { cpu: 20m, memory: 64Mi }
+  configMap:
+    content: |
+      logging {
+        level  = "info"
+        format = "logfmt"
+      }
+
+      // 1. DISCOVER: every pod scheduled on this node (HOSTNAME = node name, set by the chart)
+      discovery.kubernetes "pods" {
+        role = "pod"
+        selectors {
+          role  = "pod"
+          field = "spec.nodeName=" + coalesce(sys.env("HOSTNAME"), constants.hostname)
+        }
+      }
+
+      // 2. RELABEL: turn Kubernetes metadata into Loki labels (keep cardinality low!)
+      discovery.relabel "pods" {
+        targets = discovery.kubernetes.pods.targets
+
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label  = "namespace"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_name"]
+          target_label  = "pod"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_container_name"]
+          target_label  = "container"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_label_app"]
+          target_label  = "app"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_node_name"]
+          target_label  = "node"
+        }
+      }
+
+      // 3. COLLECT: tail container logs through the Kubernetes API
+      loki.source.kubernetes "pods" {
+        targets    = discovery.relabel.pods.output
+        forward_to = [loki.process.pods.receiver]
+      }
+
+      // 4. PROCESS: our apps log JSON -> extract "level" as a label
+      loki.process "pods" {
+        stage.json {
+          expressions = { level = "level" }
+        }
+        stage.labels {
+          values = { level = "" }
+        }
+        forward_to = [loki.write.default.receiver]
+      }
+
+      // 5. SHIP: push to Loki
+      loki.write "default" {
+        endpoint {
+          url = "http://loki.monitoring.svc:3100/loki/api/v1/push"
+        }
+      }

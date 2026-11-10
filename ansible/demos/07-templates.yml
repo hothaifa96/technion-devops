@@ -1,0 +1,21 @@
+- name: Render a different page for every host
+  hosts: mygroup
+  become: true
+  vars:
+    site_title: Ansible classroom
+    release_version: v1
+  tasks:
+    - name: Ensure the web root exists
+      ansible.builtin.file:
+        path: /srv/classroom-web
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+    - name: Render the host page
+      ansible.builtin.template:
+        src: templates/index.html.j2
+        dest: /srv/classroom-web/index.html
+        owner: root
+        group: root
+        mode: '0644'

@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>{{ site_title | e }}</title></head>
+<body>
+<h1>{{ site_title | e }}</h1>
+<p>Host: {{ inventory_hostname | e }}</p>
+<p>OS: {{ ansible_facts['distribution'] | e }} {{ ansible_facts['distribution_version'] | e }}</p>
+<p>Release: {{ release_version | e }}</p>
+</body>
+</html>

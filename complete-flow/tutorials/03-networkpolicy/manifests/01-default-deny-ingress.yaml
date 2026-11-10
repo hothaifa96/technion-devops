@@ -1,0 +1,10 @@
+# podSelector: {}  -> selects EVERY pod in the namespace
+# policyTypes: [Ingress] with no ingress rules -> nothing may come in
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: np-lab
+spec:
+  podSelector: {}
+  policyTypes: ["Ingress"]

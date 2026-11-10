@@ -1,0 +1,6 @@
+- name: Meet the managed hosts
+  hosts: mygroup
+  gather_facts: false
+  tasks:
+    - name: Test SSH authentication and Python
+      ansible.builtin.ping:

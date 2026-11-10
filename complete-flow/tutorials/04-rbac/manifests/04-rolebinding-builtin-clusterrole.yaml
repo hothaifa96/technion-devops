@@ -1,0 +1,15 @@
+# STEP: reuse the built-in "view" ClusterRole but bound to ONE namespace.
+# roleRef.kind=ClusterRole inside a RoleBinding = the rights apply only here.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: auditor-view
+  namespace: rbac-lab
+subjects:
+  - kind: ServiceAccount
+    name: auditor
+    namespace: rbac-lab
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io

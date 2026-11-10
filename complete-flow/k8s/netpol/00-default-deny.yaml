@@ -1,0 +1,10 @@
+# Zero trust: every pod in "shop" is isolated for ingress AND egress.
+# After applying this the app is completely broken - on purpose.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: shop
+spec:
+  podSelector: {}
+  policyTypes: ["Ingress", "Egress"]

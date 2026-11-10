@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cm-job
+spec:
+  ttlSecondsAfterFinished: 100
+  template:
+    spec:
+      containers:
+      - name: worker-python
+        image: python:3.12-slim
+        imagePullPolicy: IfNotPresent
+        # command : ["sh",'-c',"sleep infinity"]
+        command: ['sh',"-c",'pip install requests==2.32.3 && python3 /scripts/app.py']
+        env:
+          - name: USER_ID
+            value: "4"
+        volumeMounts:
+          - name: scripts 
+            mountPath: /scripts
+          
+      volumes:
+        - name: scripts
+          configMap:
+            name: job-scripts
+      restartPolicy: Never

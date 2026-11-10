@@ -1,0 +1,53 @@
+- name: Validate role inputs
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['os_family'] == 'Debian'
+      - site_title is string
+      - release_version is string
+      - (worker_connections | int) >= 64
+      - (worker_connections | int) <= 65536
+
+- name: Install nginx without attempting service-manager startup
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+    policy_rc_d: 101
+
+- name: Create web root
+  ansible.builtin.file:
+    path: /srv/demo
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Render web page
+  ansible.builtin.template:
+    src: index.html.j2
+    dest: /srv/demo/index.html
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Validate and install nginx configuration
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: '0644'
+    validate: /usr/sbin/nginx -t -c %s
+  notify: Reload web
+
+- name: Check nginx process without changing state
+  ansible.builtin.shell: 'test -s /run/nginx.pid && kill -0 "$(cat /run/nginx.pid)"'
+  register: nginx_process
+  changed_when: false
+  failed_when: false
+
+- name: Start nginx if not running
+  ansible.builtin.command: /usr/sbin/nginx
+  when: nginx_process.rc != 0
+  changed_when: true

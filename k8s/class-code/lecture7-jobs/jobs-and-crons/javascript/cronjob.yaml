@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: myjob
+spec:
+  schedule: "* * * * *"
+  timeZone: 'Etc/UTC'
+  successfulJobsHistoryLimit: 0 
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 100
+      completions: 8
+      parallelism: 3
+      backoffLimit: 4
+      activeDeadlineSeconds: 100
+      suspend: false
+      template:
+        spec:
+          containers:
+          - name: bash-container
+            image: hothaifaz11/jobs:bash
+            imagePullPolicy: Always
+          - name: js-container
+            image: hothaifaz11/jobs:js
+            imagePullPolicy: Always
+          restartPolicy: Never
+

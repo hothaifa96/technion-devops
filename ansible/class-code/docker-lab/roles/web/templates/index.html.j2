@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ site_title | e }}</title></head>
+<body style="background:#122523;color:#def59b;font:20px monospace;padding:8vw">
+<p>ANSIBLE / MANAGED MACHINE</p>
+<h1>{{ site_title | e }}</h1>
+<p>Host: {{ inventory_hostname | e }}</p>
+<p>Release: {{ release_version | e }}</p>
+<p>OS: {{ ansible_facts['distribution'] | e }} {{ ansible_facts['distribution_version'] | e }}</p>
+<p>This page was rendered by an Ansible role over SSH.</p>
+</body>
+</html>

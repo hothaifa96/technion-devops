@@ -1,0 +1,56 @@
+name: technion-ansible-lab
+
+x-node: &node
+  build: ./node
+  depends_on:
+    keygen:
+      condition: service_completed_successfully
+  volumes:
+    - public-keys:/public:ro
+  healthcheck:
+    test: ["CMD-SHELL", "test -s /home/ansible/.ssh/authorized_keys && /usr/sbin/sshd -t && kill -0 1"]
+    interval: 2s
+    timeout: 3s
+    retries: 20
+
+services:
+  keygen:
+    build: ./controller
+    user: root
+    volumes:
+      - private-keys:/keys
+      - public-keys:/public
+    command:
+      - bash
+      - -ec
+      - |
+        umask 077
+        if [ ! -s /keys/id_ed25519 ]; then
+          ssh-keygen -q -t ed25519 -N '' -f /keys/id_ed25519
+        fi
+        ssh-keygen -y -f /keys/id_ed25519 > /public/id_ed25519.pub
+        chmod 644 /public/id_ed25519.pub
+  controller:
+    build: ./controller
+    depends_on:
+      keygen:
+        condition: service_completed_successfully
+    volumes:
+      - .:/work
+      - private-keys:/keys:ro
+      - known-hosts:/root/.ssh
+  web1:
+    <<: *node
+    ports:
+      - '127.0.0.1:${WEB1_PORT:-8081}:80'
+  web2:
+    <<: *node
+    ports:
+      - '127.0.0.1:${WEB2_PORT:-8082}:80'
+  ops1:
+    <<: *node
+
+volumes:
+  private-keys:
+  public-keys:
+  known-hosts:

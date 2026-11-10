@@ -1,0 +1,66 @@
+# Same images as jobs.yml, but on a schedule
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: python-cron
+spec:
+  schedule: "*/1 * * * *"          # every minute
+  timeZone: "Asia/Jerusalem"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: python
+              image: jobs-python:1.0
+              imagePullPolicy: Never
+              env:
+                - name: USER_ID
+                  value: "3"
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: javascript-cron
+spec:
+  schedule: "*/2 * * * *"          # every 2 minutes
+  timeZone: "Asia/Jerusalem"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: javascript
+              image: jobs-javascript:1.0
+              imagePullPolicy: Never
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: bash-cron
+spec:
+  schedule: "0 8 * * 0-4"          # 08:00 Sun-Thu (try: kubectl create job --from)
+  timeZone: "Asia/Jerusalem"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: bash
+              image: jobs-bash:1.0
+              imagePullPolicy: Never

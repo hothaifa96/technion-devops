@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: job-scripts
+data:
+  app.py: |
+    import os, socket, sys
+    import requests
+
+    API_URL = os.getenv("API_URL", "https://jsonplaceholder.typicode.com/todos")
+    USER_ID = os.getenv("USER_ID", "1")
+
+    print(f"python (from configmap) on {socket.gethostname()}")
+    try:
+        resp = requests.get(API_URL, params={"userId": USER_ID}, timeout=10)
+        resp.raise_for_status()
+    except requests.RequestException as e:
+        print(f"request failed: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    todos = resp.json()
+    done = sum(1 for t in todos if t["completed"])
+    print(f"user {USER_ID}: {done}/{len(todos)} todos completed")
+
+  app.js: |
+    const os = require("os");
+    const API_URL = process.env.API_URL || "https://jsonplaceholder.typicode.com/posts";
+
+    (async () => {
+      console.log(`javascript (from configmap) on ${os.hostname()}`);
+      const res = await fetch(API_URL, { signal: AbortSignal.timeout(10000) });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const posts = await res.json();
+      console.log(`fetched ${posts.length} posts, first title: "${posts[0].title}"`);
+    })().catch((err) => { console.error(err.message); process.exit(1); });
+
+  app.sh: |
+    #!/bin/sh
+    set -eu
+    API_URL="${API_URL:-https://jsonplaceholder.typicode.com/users}"
+    echo "bash (from configmap) on $(hostname)"
+    curl -fsS --max-time 10 "$API_URL" | grep -o '"email": "[^"]*"'

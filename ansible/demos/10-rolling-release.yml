@@ -1,0 +1,65 @@
+- name: Roll out a release with health checks and rollback
+  hosts: mygroup
+  become: true
+  gather_facts: false
+  serial: 1
+  any_errors_fatal: true
+  vars:
+    release_version: v2
+    expected_release: "{{ release_version }}"
+  pre_tasks:
+    - name: Validate deployment input
+      ansible.builtin.assert:
+        that:
+          - not ansible_check_mode
+          - release_version in ['v1', 'v2']
+        fail_msg: Run demo 09 first and choose v1 or v2. This rollout requires real execution.
+    - name: Capture the current Git revision
+      ansible.builtin.command: git -C /opt/classroom-site rev-parse HEAD
+      register: previous_revision
+      changed_when: false
+  tasks:
+    - name: Deploy and verify one host
+      block:
+        - name: Check out the requested release
+          ansible.builtin.git:
+            repo: /srv/classroom-site.bundle
+            dest: /opt/classroom-site
+            version: "{{ release_version }}"
+        - name: Publish the new page
+          ansible.builtin.copy:
+            src: /opt/classroom-site/index.html
+            dest: /srv/classroom-web/index.html
+            remote_src: true
+            owner: root
+            group: root
+            mode: '0644'
+        - name: Require a healthy release before continuing
+          ansible.builtin.uri:
+            url: "http://{{ inventory_hostname }}:8080/"
+            return_content: true
+            status_code: 200
+            use_proxy: false
+          delegate_to: localhost
+          become: false
+          register: health
+          retries: 3
+          delay: 1
+          until: health.status == 200 and expected_release in health.content
+      rescue:
+        - name: Restore the previous Git revision
+          ansible.builtin.git:
+            repo: /srv/classroom-site.bundle
+            dest: /opt/classroom-site
+            version: "{{ previous_revision.stdout }}"
+        - name: Restore the previous page
+          ansible.builtin.copy:
+            src: /opt/classroom-site/index.html
+            dest: /srv/classroom-web/index.html
+            remote_src: true
+            owner: root
+            group: root
+            mode: '0644'
+        - name: Stop the rollout while preserving failure status
+          ansible.builtin.fail:
+            msg: "{{ inventory_hostname }} failed its health gate. Restored {{ previous_revision.stdout }}; investigate before retrying."

@@ -1,0 +1,16 @@
+- name: Verify HTTP from the controller network
+  hosts: web
+  gather_facts: false
+  tasks:
+    - name: Request each web machine from controller
+      ansible.builtin.uri:
+        url: 'http://{{ inventory_hostname }}/'
+        return_content: true
+        status_code: 200
+      delegate_to: localhost
+      register: response
+
+    - name: Assert expected machine identity
+      ansible.builtin.assert:
+        that:
+          - inventory_hostname in response.content

@@ -1,0 +1,84 @@
+# Lab playground: namespace rbac-lab with three identities
+#   alice   - a developer, should only LOOK at pods
+#   bob     - on-call, may create jobs and restart ONE deployment
+#   auditor - gets the built-in "view" ClusterRole, limited to rbac-lab
+# Plus an ubuntu pod running as alice to see RBAC from the inside.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rbac-lab
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: alice
+  namespace: rbac-lab
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: bob
+  namespace: rbac-lab
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: auditor
+  namespace: rbac-lab
+---
+# A workload pod + a cronjob for bob to operate on, and a secret alice must NOT read
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello
+  namespace: rbac-lab
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: hello }
+  template:
+    metadata:
+      labels: { app: hello }
+    spec:
+      containers:
+        - name: hello
+          image: busybox:1.36
+          command: ["sh", "-c", "mkdir -p /www && echo hello > /www/index.html && httpd -f -p 8080 -h /www"]
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: hourly-task
+  namespace: rbac-lab
+spec:
+  schedule: "0 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: task
+              image: busybox:1.36
+              command: ["sh", "-c", "echo 'hourly task ran'; sleep 2"]
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-password
+  namespace: rbac-lab
+type: Opaque
+stringData:
+  password: s3cret!
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: alice-shell
+  namespace: rbac-lab
+spec:
+  serviceAccountName: alice
+  containers:
+    - name: ubuntu
+      image: ubuntu:24.04
+      command: ["sleep", "infinity"]

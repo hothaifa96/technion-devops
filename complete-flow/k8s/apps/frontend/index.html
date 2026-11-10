@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Complete Flow Shop</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; background: #0f172a; color: #e2e8f0; }
+    header { padding: 24px 40px; background: #1e293b; border-bottom: 3px solid #f97316; }
+    main { padding: 24px 40px; display: grid; grid-template-columns: 320px 1fr; gap: 32px; }
+    h1 { margin: 0; font-size: 26px; } h2 { font-size: 18px; color: #f97316; }
+    .card { background: #1e293b; border-radius: 10px; padding: 20px; }
+    input, button { width: 100%; padding: 10px; margin: 6px 0; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: #e2e8f0; box-sizing: border-box; }
+    button { background: #f97316; border: none; font-weight: bold; cursor: pointer; }
+    table { width: 100%; border-collapse: collapse; } td, th { padding: 8px; border-bottom: 1px solid #334155; text-align: left; }
+    .tag { padding: 2px 8px; border-radius: 10px; font-size: 12px; } .api { background: #0e7490; } .generator { background: #7c3aed; }
+    #error { color: #f87171; }
+  </style>
+</head>
+<body>
+<header><h1>Complete Flow Shop</h1><small>nginx frontend &rarr; Flask backend &rarr; PostgreSQL (+ hourly CronJob data generator)</small></header>
+<main>
+  <section>
+    <div class="card">
+      <h2>New order</h2>
+      <input id="customer" placeholder="customer">
+      <input id="product" placeholder="product">
+      <input id="amount" type="number" placeholder="amount">
+      <button onclick="createOrder()">Create</button>
+    </div>
+    <div class="card" style="margin-top:20px"><h2>Stats</h2><pre id="stats">loading...</pre></div>
+  </section>
+  <section class="card">
+    <h2>Latest orders</h2><div id="error"></div>
+    <table><thead><tr><th>#</th><th>customer</th><th>product</th><th>amount</th><th>source</th><th>created</th></tr></thead><tbody id="orders"></tbody></table>
+  </section>
+</main>
+<script>
+async function load() {
+  try {
+    const [orders, stats] = await Promise.all([fetch('/api/orders').then(r => r.json()), fetch('/api/stats').then(r => r.json())]);
+    document.getElementById('orders').innerHTML = orders.map(o =>
+      `<tr><td>${o.id}</td><td>${o.customer}</td><td>${o.product}</td><td>${o.amount.toFixed(2)}</td><td><span class="tag ${o.source}">${o.source}</span></td><td>${new Date(o.created_at).toLocaleString()}</td></tr>`).join('');
+    document.getElementById('stats').textContent = JSON.stringify(stats, null, 2);
+    document.getElementById('error').textContent = '';
+  } catch (e) {
+    document.getElementById('error').textContent = 'backend unreachable: ' + e;
+  }
+}
+async function createOrder() {
+  const body = { customer: customer.value, product: product.value, amount: Number(amount.value || 0) };
+  await fetch('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  load();
+}
+load(); setInterval(load, 5000);
+</script>
+</body>
+</html>

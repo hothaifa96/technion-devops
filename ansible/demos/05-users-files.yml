@@ -1,0 +1,34 @@
+- name: Prepare an application workspace
+  hosts: mygroup
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Create a service group
+      ansible.builtin.group:
+        name: classroom
+        state: present
+    - name: Create a non-login service user
+      ansible.builtin.user:
+        name: classroom
+        group: classroom
+        shell: /usr/sbin/nologin
+        create_home: false
+        state: present
+    - name: Create application directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: classroom
+        group: classroom
+        mode: '0755'
+      loop:
+        - /srv/classroom
+        - /srv/classroom/data
+        - /srv/classroom/logs
+    - name: Write a root-managed application setting
+      ansible.builtin.copy:
+        content: "environment=training\n"
+        dest: /srv/classroom/app.env
+        owner: root
+        group: classroom
+        mode: '0640'

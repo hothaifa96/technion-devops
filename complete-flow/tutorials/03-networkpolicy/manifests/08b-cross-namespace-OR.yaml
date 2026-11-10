@@ -1,0 +1,22 @@
+# TWO list items (note the extra "-"):
+#   "ANY pod in namespace np-other" (outsider AND stranger!)
+#     OR   "pods labelled app=outsider in np-lab" (podSelector alone = own namespace)
+# One dash changed the meaning completely - this is the #1 NetworkPolicy bug.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: web-allow-outsider
+  namespace: np-lab
+spec:
+  podSelector:
+    matchLabels: { app: web }
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: np-other
+        - podSelector:
+            matchLabels: { app: outsider }
+      ports:
+        - { protocol: TCP, port: 8080 }

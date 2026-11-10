@@ -1,0 +1,13 @@
+- name: Discover the fleet
+  hosts: mygroup
+  tasks:
+    - name: Show useful facts
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }} runs {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }} with Python {{ ansible_facts['python_version'] }}"
+    - name: Discover the connection identity
+      ansible.builtin.command: whoami
+      register: identity
+      changed_when: false
+    - name: Show the connection identity
+      ansible.builtin.debug:
+        var: identity.stdout

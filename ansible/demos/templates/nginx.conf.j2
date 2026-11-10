@@ -1,0 +1,16 @@
+pid /run/ansible-classroom-nginx.pid;
+error_log /var/log/nginx/ansible-classroom-error.log;
+events {
+    worker_connections {{ worker_connections }};
+}
+http {
+    access_log /var/log/nginx/ansible-classroom-access.log;
+    server {
+        listen 8080;
+        server_name _;
+        root /srv/classroom-web;
+        location / {
+            index index.html;
+        }
+    }
+}

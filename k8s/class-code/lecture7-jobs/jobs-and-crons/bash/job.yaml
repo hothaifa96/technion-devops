@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: users-job
+  namespace: default
+spec:
+  ttlSecondsAfterFinished: 100
+  completions: 3
+  parallelism: 2
+  backoffLimit: 4
+  activeDeadlineSeconds: 100
+  suspend: false
+  template:
+    spec:
+      containers:
+      - name: bash-container
+        image: hothaifaz11/jobs:bash
+        imagePullPolicy: Always
+      restartPolicy: Never
+

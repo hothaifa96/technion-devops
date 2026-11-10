@@ -13,6 +13,7 @@ Every topic follows the same layout:
 |-------|-------|-----------|
 | Docker | [docker/README.md](docker/README.md) | Dockerfile, docker run, volumes, networks, multi-stage, buildx, best practices, compose |
 | Kubernetes | [k8s/README.md](k8s/README.md) | control plane, worker node, workloads, probes & resources, scheduling, services/ingress/netpol, ConfigMap/Secret, storage, RBAC & pod security, jobs, HPA |
+| Ansible | [ansible/README.md](ansible/README.md) | architecture, SSH inventory, playbooks, variables, roles, handlers, Vault, rolling operations, Docker machine labs |
 | Helm | [helm/README.md](helm/README.md) | public charts, chart structure, templating, release lifecycle & environments, umbrella charts, hooks & tests, OCI & GitOps |
 | Jenkins CI/CD | [jenkins/README.md](jenkins/README.md) | architecture, declarative syntax, env & credentials, parameters & triggers, when/input, parallel & matrix, post/retry/timeout, agents (docker/k8s), artifacts & junit, shared libraries, multibranch, full CI/CD |
 | Observability | [observability/README.md](observability/README.md) | Prometheus architecture, metric types, Python client, PromQL, exporters, service discovery/pushgateway/federation/Kubernetes, alerting, Grafana, logs & traces |

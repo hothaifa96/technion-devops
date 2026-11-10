@@ -1,53 +1,25 @@
-// 09 - Kubernetes agent: ephemeral pod with several containers (python, kaniko, helm)
-// Requires: Jenkins Kubernetes plugin + cloud configured, secret "dockerhub-config" (docker config.json) in the agent namespace
-pipeline {
+pipeline{
     agent {
         kubernetes {
-            yamlFile 'jenkins/class-code/09-k8s-agent/pod.yaml'
             defaultContainer 'python'
+            yaml '''
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: busybox
+    image: busybox:1.38.0
+    command: ["sleep"]
+    args: ["infinity"]
+'''
         }
-    }
-
-    environment {
-        IMAGE = 'myuser/jokes'
-        TAG   = "${env.BUILD_NUMBER}"
-    }
-
-    stages {
-        stage('Where am I?') {
-            steps {
-                sh 'hostname && cat /etc/os-release | head -2'
-                container('helm') { sh 'helm version --short' }
-            }
-        }
-
-        stage('Unit tests') {
-            steps {
-                dir('jenkins/chuck-norris/jokes-application') {
-                    sh 'pip install -q -r requirements.txt && python -c "import main" || true'
-                }
-            }
-        }
-
-        stage('Build & push with Kaniko') {
-            steps {
-                container('kaniko') {
-                    sh '''
-                      /kaniko/executor \
-                        --context=dir://$WORKSPACE/jenkins/chuck-norris/jokes-application \
-                        --destination=$IMAGE:$TAG \
-                        --cache=true
-                    '''
-                }
-            }
-        }
-
-        stage('Deploy with Helm') {
-            when { branch 'main' }
-            steps {
-                container('helm') {
-                    sh 'helm upgrade --install jokes helm/class-code/02-my-first-chart/whoami -n jokes --create-namespace --wait'
-                }
+    } 
+    stages{
+        stage('AAAAAA'){
+            steps{
+                echo 'hello from the other side ...... '
+                sh 'curl google.com'
+                sh 'ping -c 4 8.8.8.8'
             }
         }
     }

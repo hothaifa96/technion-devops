@@ -1,0 +1,17 @@
+- name: Deliver the first managed file
+  hosts: mygroup
+  gather_facts: false
+  tasks:
+    - name: Write a classroom greeting
+      ansible.builtin.copy:
+        content: "Hello from Ansible!\n"
+        dest: /tmp/classroom-hello.txt
+        mode: '0644'
+    - name: Read the greeting
+      ansible.builtin.command: cat /tmp/classroom-hello.txt
+      register: greeting
+      changed_when: false
+    - name: Verify the content
+      ansible.builtin.assert:
+        that:
+          - greeting.stdout == 'Hello from Ansible!'

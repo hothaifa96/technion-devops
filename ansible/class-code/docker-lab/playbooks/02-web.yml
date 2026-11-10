@@ -1,0 +1,32 @@
+- name: Converge and verify web machines one at a time
+  hosts: web
+  become: true
+  serial: 1
+  any_errors_fatal: true
+  pre_tasks:
+    - name: Require real execution for package and process integration
+      ansible.builtin.assert:
+        that:
+          - not ansible_check_mode
+        fail_msg: Use 01-baseline.yml for check mode; this demo requires real integration execution
+  roles:
+    - web
+  post_tasks:
+    - name: Activate notified configuration before verification
+      ansible.builtin.meta: flush_handlers
+
+    - name: Verify local response
+      ansible.builtin.uri:
+        url: http://127.0.0.1/
+        return_content: true
+        status_code: 200
+      register: web_response
+      retries: 5
+      delay: 1
+      until: web_response.status == 200
+
+    - name: Require this machine and release in response
+      ansible.builtin.assert:
+        that:
+          - inventory_hostname in web_response.content
+          - (release_version | string | e) in web_response.content

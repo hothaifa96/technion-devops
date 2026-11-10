@@ -1,0 +1,22 @@
+- name: Deploy a training-only secret
+  hosts: operations
+  become: true
+  vars_files:
+    - ../inventory/group_vars/operations.vault.yml
+  tasks:
+    - name: Require a nonempty token
+      ansible.builtin.assert:
+        that:
+          - training_token is defined
+          - training_token | length > 0
+      no_log: true
+
+    - name: Write root-only training token
+      ansible.builtin.copy:
+        content: '{{ training_token }}'
+        dest: /etc/training-token
+        owner: root
+        group: root
+        mode: '0600'
+      no_log: true
+      diff: false

@@ -1,0 +1,48 @@
+- name: Deploy a versioned Git website
+  hosts: mygroup
+  become: true
+  gather_facts: false
+  vars:
+    release_version: v1
+  tasks:
+    - name: Require a real Git deployment
+      ansible.builtin.assert:
+        that: not ansible_check_mode
+    - name: Copy the classroom Git bundle
+      ansible.builtin.copy:
+        src: classroom-site.bundle
+        dest: /srv/classroom-site.bundle
+        owner: root
+        group: root
+        mode: '0644'
+    - name: Check out the requested Git release
+      ansible.builtin.git:
+        repo: /srv/classroom-site.bundle
+        dest: /opt/classroom-site
+        version: "{{ release_version }}"
+        update: true
+    - name: Publish the checked-out page
+      ansible.builtin.copy:
+        src: /opt/classroom-site/index.html
+        dest: /srv/classroom-web/index.html
+        remote_src: true
+        owner: root
+        group: root
+        mode: '0644'
+    - name: Read the deployed Git commit
+      ansible.builtin.command: git -C /opt/classroom-site rev-parse --short HEAD
+      register: commit
+      changed_when: false
+    - name: Show the deployed version
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }} runs {{ release_version }} at commit {{ commit.stdout }}"
+    - name: Verify the published release
+      ansible.builtin.uri:
+        url: "http://{{ inventory_hostname }}:8080/"
+        return_content: true
+        status_code: 200
+        use_proxy: false
+      delegate_to: localhost
+      become: false
+      register: page
+      failed_when: release_version not in page.content

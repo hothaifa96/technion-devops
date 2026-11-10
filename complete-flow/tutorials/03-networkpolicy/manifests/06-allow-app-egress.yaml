@@ -1,0 +1,33 @@
+# With default-deny-egress, a connection needs TWO permissions:
+#   egress  on the sender   AND   ingress on the receiver
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: client-egress-to-web
+  namespace: np-lab
+spec:
+  podSelector:
+    matchLabels: { app: client }
+  policyTypes: ["Egress"]
+  egress:
+    - to:
+        - podSelector:
+            matchLabels: { app: web }
+      ports:
+        - { protocol: TCP, port: 8080 }
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: web-egress-to-db
+  namespace: np-lab
+spec:
+  podSelector:
+    matchLabels: { app: web }
+  policyTypes: ["Egress"]
+  egress:
+    - to:
+        - podSelector:
+            matchLabels: { app: db }
+      ports:
+        - { protocol: TCP, port: 5432 }

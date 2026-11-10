@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: themevaaes-job1
+  namespace: default
+spec:
+  ttlSecondsAfterFinished: 100
+  completions: 8
+  parallelism: 3
+  backoffLimit: 4
+  activeDeadlineSeconds: 100
+  suspend: false
+  template:
+    spec:
+      containers:
+      - name: bash-container
+        image: hothaifaz11/jobs:bash
+        imagePullPolicy: Always
+      - name: js-container
+        image: hothaifaz11/jobs:js
+        imagePullPolicy: Always
+      - name: mevaaes
+        image: ubuntu
+        command: ["bash","-c"]
+        args:
+          - figlet
+          - yabadavbadooo
+      restartPolicy: Never
+

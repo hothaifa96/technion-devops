@@ -1,0 +1,52 @@
+# # Images are built locally inside minikube (see README) -> imagePullPolicy: Never
+# apiVersion: batch/v1
+# kind: Job
+# metadata:
+#   name: python-job
+# spec:
+#   backoffLimit: 3
+#   ttlSecondsAfterFinished: 600
+#   template:
+#     spec:
+#       restartPolicy: Never
+#       containers:
+#         - name: python
+#           image: jobs-python:1.0
+#           imagePullPolicy: Never
+#           env:
+#             - name: USER_ID
+#               value: "2"
+# ---
+# apiVersion: batch/v1
+# kind: Job
+# metadata:
+#   name: javascript-job
+# spec:
+#   backoffLimit: 3
+#   ttlSecondsAfterFinished: 600
+#   template:
+#     spec:
+#       restartPolicy: Never
+#       containers:
+#         - name: javascript
+#           image: jobs-javascript:1.0
+#           imagePullPolicy: Never
+#           env:
+#             - name: TOP
+#               value: "5"
+# ---
+# apiVersion: batch/v1
+# kind: Job
+# metadata:
+#   name: bash-job
+# spec:
+#   backoffLimit: 3
+#   ttlSecondsAfterFinished: 600
+#   template:
+#     spec:
+#       restartPolicy: Never
+#       containers:
+#         - name: bash
+#           image: jobs-bash:1.0
+#           imagePullPolicy: Never
+

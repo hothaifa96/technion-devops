@@ -1,0 +1,52 @@
+- name: Serve the pages with validated configuration
+  hosts: mygroup
+  become: true
+  gather_facts: false
+  vars:
+    worker_connections: 256
+  pre_tasks:
+    - name: Require a real deployment for process management
+      ansible.builtin.assert:
+        that: not ansible_check_mode
+        fail_msg: Use demo 06 for check mode; this demo needs real package and process state.
+  tasks:
+    - name: Install nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+    - name: Install the validated nginx configuration
+      ansible.builtin.template:
+        src: templates/nginx.conf.j2
+        dest: /etc/nginx/ansible-classroom.conf
+        owner: root
+        group: root
+        mode: '0644'
+        validate: /usr/sbin/nginx -t -c %s
+      notify: Reload classroom nginx
+    - name: Check whether classroom nginx is running
+      ansible.builtin.shell: test -s /run/ansible-classroom-nginx.pid && kill -0 "$(cat /run/ansible-classroom-nginx.pid)"
+      register: nginx_running
+      changed_when: false
+      failed_when: nginx_running.rc not in [0, 1]
+    - name: Start classroom nginx when absent
+      ansible.builtin.command: /usr/sbin/nginx -c /etc/nginx/ansible-classroom.conf
+      when: nginx_running.rc != 0
+    - name: Apply notified handlers before health checks
+      ansible.builtin.meta: flush_handlers
+    - name: Verify HTTP from the controller
+      ansible.builtin.uri:
+        url: "http://{{ inventory_hostname }}:8080/"
+        return_content: true
+        status_code: 200
+        use_proxy: false
+      delegate_to: localhost
+      become: false
+      register: page
+      retries: 5
+      delay: 1
+      until: page.status == 200
+  handlers:
+    - name: Reload classroom nginx
+      ansible.builtin.command: /usr/sbin/nginx -c /etc/nginx/ansible-classroom.conf -s reload

@@ -1,0 +1,111 @@
+# Lab playground:
+#
+#   namespace np-lab                                 namespace np-other
+#   ┌───────────────────────────────────────────┐    ┌──────────────────┐
+#   │ client   (ubuntu)   app=client             │    │ outsider (ubuntu)│
+#   │ intruder (busybox)  app=intruder           │    │ app=outsider     │
+#   │ web      (busybox httpd :8080) app=web     │    └──────────────────┘
+#   │ db       (busybox httpd :5432) app=db      │
+#   └───────────────────────────────────────────┘
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: np-lab
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: np-other
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web
+  namespace: np-lab
+  labels: { app: web }
+spec:
+  containers:
+    - name: httpd
+      image: busybox:1.36
+      command: ["sh", "-c", "mkdir -p /www && echo 'hello from WEB' > /www/index.html && httpd -f -v -p 8080 -h /www"]
+      ports: [{ containerPort: 8080 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: np-lab
+spec:
+  selector: { app: web }
+  ports: [{ port: 8080 }]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: db
+  namespace: np-lab
+  labels: { app: db }
+spec:
+  containers:
+    - name: httpd
+      image: busybox:1.36
+      # a fake "database": an HTTP server on the postgres port, easy to test with wget/curl
+      command: ["sh", "-c", "mkdir -p /www && echo 'hello from DB' > /www/index.html && httpd -f -v -p 5432 -h /www"]
+      ports: [{ containerPort: 5432 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+  namespace: np-lab
+spec:
+  selector: { app: db }
+  ports: [{ port: 5432 }]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: client
+  namespace: np-lab
+  labels: { app: client }
+spec:
+  containers:
+    - name: ubuntu
+      image: ubuntu:24.04
+      command: ["sleep", "infinity"]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: intruder
+  namespace: np-lab
+  labels: { app: intruder }
+spec:
+  containers:
+    - name: busybox
+      image: busybox:1.36
+      command: ["sleep", "infinity"]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: outsider
+  namespace: np-other
+  labels: { app: outsider }
+spec:
+  containers:
+    - name: ubuntu
+      image: ubuntu:24.04
+      command: ["sleep", "infinity"]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: stranger
+  namespace: np-other
+  labels: { app: stranger }
+spec:
+  containers:
+    - name: busybox
+      image: busybox:1.36
+      command: ["sleep", "infinity"]

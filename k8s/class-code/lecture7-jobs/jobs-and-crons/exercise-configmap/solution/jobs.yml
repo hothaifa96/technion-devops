@@ -1,0 +1,77 @@
+# No custom images: official images + script mounted from the ConfigMap
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cm-python-job
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: python
+          image: python:3.12-slim
+          # requests is not in the base image -> install it before running
+          command: ["sh", "-c", "pip install -q --no-cache-dir requests==2.32.3 && python -u /scripts/app.py"]
+          env:
+            - name: USER_ID
+              value: "4"
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+      volumes:
+        - name: scripts
+          configMap:
+            name: job-scripts
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cm-javascript-job
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: javascript
+          image: node:20-alpine
+          command: ["node", "/scripts/app.js"]
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+      volumes:
+        - name: scripts
+          configMap:
+            name: job-scripts
+            items:                    # mount only the file we need
+              - key: app.js
+                path: app.js
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cm-bash-job
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: bash
+          image: curlimages/curl:8.10.1
+          command: ["/scripts/app.sh"]
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+      volumes:
+        - name: scripts
+          configMap:
+            name: job-scripts
+            defaultMode: 0755         # make the script executable
+            items:
+              - key: app.sh
+                path: app.sh

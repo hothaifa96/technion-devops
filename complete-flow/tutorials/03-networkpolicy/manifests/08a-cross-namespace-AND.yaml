@@ -1,0 +1,20 @@
+# ONE list item with namespaceSelector AND podSelector:
+#   "pods labelled app=outsider that live in namespace np-other"
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: web-allow-outsider
+  namespace: np-lab
+spec:
+  podSelector:
+    matchLabels: { app: web }
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: np-other
+          podSelector:
+            matchLabels: { app: outsider }
+      ports:
+        - { protocol: TCP, port: 8080 }

@@ -1,0 +1,43 @@
+# "bob" is on-call: he may trigger the data-generator CronJob manually
+# (kubectl create job --from=cronjob/data-generator) and restart the backend,
+# but he can't touch anything else.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ops-bob
+  namespace: shop
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: job-operator
+  namespace: shop
+rules:
+  - apiGroups: ["batch"]
+    resources: ["cronjobs"]
+    resourceNames: ["data-generator"]
+    verbs: ["get", "patch"]           # get = read template, patch = suspend/resume
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    resourceNames: ["backend"]
+    verbs: ["get", "patch"]           # kubectl rollout restart = patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ops-bob-job-operator
+  namespace: shop
+subjects:
+  - kind: ServiceAccount
+    name: ops-bob
+    namespace: shop
+roleRef:
+  kind: Role
+  name: job-operator
+  apiGroup: rbac.authorization.k8s.io

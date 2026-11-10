@@ -1,0 +1,16 @@
+# "db" accepts traffic on 5432 only from "web" - the client must NOT reach the db directly
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: db-allow-web
+  namespace: np-lab
+spec:
+  podSelector:
+    matchLabels: { app: db }
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: { app: web }
+      ports:
+        - { protocol: TCP, port: 5432 }

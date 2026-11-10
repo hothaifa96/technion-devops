@@ -1,0 +1,39 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: shop-alerts
+  namespace: shop
+spec:
+  groups:
+    - name: shop
+      rules:
+        - alert: BackendDown
+          expr: up{job="backend", namespace="shop"} == 0
+          for: 1m
+          labels: { severity: critical }
+          annotations:
+            summary: "backend pod {{ $labels.pod }} is not being scraped"
+        - alert: BackendHighErrorRate
+          expr: |
+            sum(rate(http_requests_total{namespace="shop", status=~"5.."}[5m]))
+              / sum(rate(http_requests_total{namespace="shop"}[5m])) > 0.05
+          for: 5m
+          labels: { severity: warning }
+          annotations:
+            summary: "more than 5% of backend requests fail"
+        - alert: DatabaseUnreachable
+          expr: max(shop_db_up{namespace="shop"}) == 0
+          for: 1m
+          labels: { severity: critical }
+          annotations:
+            summary: "backend cannot reach postgres (NetworkPolicy? postgres down?)"
+        - alert: DataGeneratorJobFailed
+          expr: kube_job_status_failed{namespace="shop", job_name=~"data-generator.*"} > 0
+          labels: { severity: warning }
+          annotations:
+            summary: "data-generator job {{ $labels.job_name }} failed"
+        - alert: DataGeneratorNotRunning
+          expr: time() - kube_cronjob_status_last_successful_time{namespace="shop", cronjob="data-generator"} > 2 * 3600
+          labels: { severity: warning }
+          annotations:
+            summary: "data-generator has not succeeded for 2 hours"

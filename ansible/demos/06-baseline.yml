@@ -1,0 +1,35 @@
+- name: Configure a repeatable baseline
+  hosts: mygroup
+  become: true
+  vars:
+    classroom_message: Welcome to the Ansible classroom
+  tasks:
+    - name: Require Ubuntu
+      ansible.builtin.assert:
+        that:
+          - ansible_facts['distribution'] == 'Ubuntu'
+    - name: Ensure baseline packages are present
+      ansible.builtin.apt:
+        name:
+          - curl
+          - git
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+      tags: packages
+    - name: Ensure the managed configuration directory exists
+      ansible.builtin.file:
+        path: /etc/ansible-classroom
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+      tags: banner
+    - name: Write the classroom message
+      ansible.builtin.copy:
+        content: "{{ classroom_message }}\n"
+        dest: /etc/ansible-classroom/banner.txt
+        owner: root
+        group: root
+        mode: '0644'
+      tags: banner

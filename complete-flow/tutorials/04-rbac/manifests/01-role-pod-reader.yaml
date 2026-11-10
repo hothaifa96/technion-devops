@@ -1,0 +1,27 @@
+# STEP: a Role (namespace-scoped) + RoleBinding -> alice can read pods only in rbac-lab
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-reader
+  namespace: rbac-lab
+rules:
+  - apiGroups: [""]                              # "" = core API group
+    resources: ["pods", "pods/log", "services"]
+    verbs: ["get", "list", "watch"]              # read-only verbs
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: alice-pod-reader
+  namespace: rbac-lab
+subjects:
+  - kind: ServiceAccount
+    name: alice
+    namespace: rbac-lab
+roleRef:                                         # points at the role above
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,45 @@
+# Nodes are cluster-scoped -> a Role can't grant them. We need a ClusterRole
+# and a ClusterRoleBinding.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: node-viewer
+rules:
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: dev-alice-node-viewer
+subjects:
+  - kind: ServiceAccount
+    name: dev-alice
+    namespace: shop
+roleRef:
+  kind: ClusterRole
+  name: node-viewer
+  apiGroup: rbac.authorization.k8s.io
+---
+# Re-using a built-in ClusterRole inside ONE namespace: a RoleBinding can point
+# at a ClusterRole - the permissions are then limited to the binding's namespace.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: auditor
+  namespace: shop
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: auditor-view
+  namespace: shop
+subjects:
+  - kind: ServiceAccount
+    name: auditor
+    namespace: shop
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io

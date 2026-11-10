@@ -1,0 +1,36 @@
+# STEP: bob may create jobs from the hourly-task cronjob and restart ONLY the
+# hello deployment. resourceNames makes it surgically narrow.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: job-runner
+  namespace: rbac-lab
+rules:
+  - apiGroups: ["batch"]
+    resources: ["cronjobs"]
+    resourceNames: ["hourly-task"]
+    verbs: ["get", "patch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    resourceNames: ["hello"]
+    verbs: ["get", "patch"]                     # rollout restart = patch
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: bob-job-runner
+  namespace: rbac-lab
+subjects:
+  - kind: ServiceAccount
+    name: bob
+    namespace: rbac-lab
+roleRef:
+  kind: Role
+  name: job-runner
+  apiGroup: rbac.authorization.k8s.io
